@@ -1,0 +1,3981 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>英雄立志传·三国志 —— 存档修改器</title>
+<style>
+  :root{
+    --bg:#f5f6f8; --card:#fff; --line:#e3e6eb; --tx:#1e222b; --tx2:#5c6472;
+    --ac:#2f6fed; --ac2:#eaf1ff; --ok:#1a8a56; --okb:#e7f7ef;
+    --wn:#9a5c08; --wnb:#fdf3e2; --er:#bf3a2b; --erb:#fdece9;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--tx);
+    font:14px/1.6 "Microsoft YaHei","PingFang SC",system-ui,sans-serif}
+  .wrap{max-width:1240px;margin:0 auto;padding:20px 16px 70px}
+  h1{font-size:20px;margin:0 0 4px}
+  .sub{color:var(--tx2);font-size:13px;margin-bottom:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:15px 17px;margin-bottom:13px}
+  .card h2{font-size:15px;margin:0 0 11px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  /* ---- 顶部大标签（2026-10-14 界面重构）---- */
+  #tabs{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0 14px;position:sticky;top:0;z-index:30;
+    background:var(--bg);padding:8px 0}
+  #tabs .tab{background:#fff;border:1px solid var(--line);border-radius:9px;padding:9px 16px;
+    font-size:13.5px;cursor:pointer;color:var(--tx2);font-family:inherit}
+  #tabs .tab:hover{border-color:var(--ac);color:var(--ac)}
+  #tabs .tab.on{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600;
+    box-shadow:0 2px 8px rgba(47,111,237,.28)}
+  #tabs .sep{flex:1 1 auto}
+  #updCatBtn{background:#fff;border:1px solid var(--line);border-radius:9px;padding:9px 14px;
+    font-size:13px;cursor:pointer;color:var(--tx2);font-family:inherit}
+  #updCatBtn:hover{border-color:var(--ac);color:var(--ac)}
+  #updCatBtn:disabled{opacity:.55;cursor:default}
+  .addwrap{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+  .addwrap .main{flex:1 1 460px;min-width:320px}
+  .addwrap .side{flex:0 0 268px;max-width:100%}
+  /* 「各种添加」的内嵌列表：分类页签 + 多选列表 */
+  .addtabs{display:flex;flex-wrap:wrap;gap:5px;margin:4px 0 10px;border-bottom:1px solid var(--line);padding-bottom:9px}
+  .addtabs .at{background:#fff;border:1px solid var(--line);border-radius:7px;padding:5px 13px;
+    font-size:13px;cursor:pointer;color:var(--tx2);font-family:inherit}
+  .addtabs .at:hover{border-color:var(--ac);color:var(--ac)}
+  .addtabs .at.on{background:var(--ac2);border-color:var(--ac);color:var(--ac);font-weight:600}
+  .addlist{width:100%;height:340px;border:1px solid var(--line);border-radius:8px;padding:5px 6px;
+    font:13px/1.55 "Microsoft YaHei","PingFang SC",system-ui,sans-serif;background:#fff;color:var(--tx);
+    outline:none;overflow:auto}
+  .addlist option{padding:1px 4px}
+  .addlist option:checked{background:var(--ac);color:#fff}
+  .tag{font-size:11px;font-weight:400;padding:2px 7px;border-radius:20px;background:var(--ac2);color:var(--ac);border:1px solid #cfe0ff}
+  .tag.ok{background:var(--okb);color:var(--ok);border-color:#c3ead7}
+  .tag.wn{background:var(--wnb);color:var(--wn);border-color:#f1ddba}
+  #drop{border:2px dashed #c5ccd7;border-radius:10px;padding:24px;text-align:center;color:var(--tx2);cursor:pointer;background:#fbfcfd}
+  #drop:hover,#drop.over{border-color:var(--ac);background:var(--ac2);color:var(--ac)}
+  .row{display:flex;flex-wrap:wrap;gap:12px}
+  .col{flex:1 1 320px;min-width:270px}
+  .kv{display:grid;grid-template-columns:110px 1fr;gap:5px 9px;align-items:center}
+  .kv label{color:var(--tx2);font-size:13px}
+  input[type=text],input[type=number],select{width:100%;padding:5px 8px;border:1px solid var(--line);border-radius:6px;font:inherit;background:#fff;color:var(--tx)}
+  input:focus,select:focus{outline:2px solid var(--ac2);border-color:var(--ac)}
+  button{padding:6px 13px;border:1px solid var(--line);background:#fff;border-radius:7px;font:inherit;cursor:pointer;color:var(--tx)}
+  button:hover{border-color:var(--ac);color:var(--ac)}
+  button.primary{background:var(--ac);border-color:var(--ac);color:#fff}
+  button.primary:hover{background:#2459c4;color:#fff}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{border-bottom:1px solid var(--line);padding:4px 7px;text-align:left}
+  th{color:var(--tx2);font-weight:500;background:#fafbfc;position:sticky;top:0;z-index:1}
+  .scroll{max-height:400px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+  tr.sel{background:var(--ac2)}
+  tr:hover{background:#f2f6ff}
+  .mono{font-family:Consolas,monospace}
+  .msg{padding:8px 11px;border-radius:8px;margin:7px 0;font-size:13px;white-space:pre-wrap}
+  .msg.ok{background:var(--okb);color:var(--ok);border:1px solid #c3ead7}
+  .msg.wn{background:var(--wnb);color:var(--wn);border:1px solid #f1ddba}
+  .msg.er{background:var(--erb);color:var(--er);border:1px solid #f2c8c2}
+  .hint{color:var(--tx2);font-size:12.5px;line-height:1.7}
+  code{background:#eef1f5;padding:1px 5px;border-radius:4px;font-family:Consolas,monospace;font-size:12.5px}
+  .flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:9px}
+  .badge{font-size:11.5px;color:var(--tx2)}
+  .grid6{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px}
+  .fld{border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:#fcfdfe}
+  .fld .lb{font-size:12px;color:var(--tx2)}
+  .titledesc{border:1px dashed #cdd5e0;border-left:3px solid var(--ac);margin-top:7px;
+    padding:6px 9px;background:#fbfcff;border-radius:6px;font-size:12.5px;line-height:1.65}
+  /* ---- 卡片折叠 ---- */
+  .card>h2{cursor:pointer;user-select:none;transition:color .12s}
+  .card>h2:hover{color:var(--ac)}
+  .card>h2>.caret{flex:0 0 auto;width:13px;color:var(--tx2);font-size:12px;line-height:1}
+  .card>h2:hover>.caret{color:var(--ac)}
+  .card.clp>h2{margin-bottom:0}
+  .card.clp>.cbody{display:none}
+  .card>.cbody{margin-top:0}
+  .cardbar{display:flex;align-items:center;gap:8px;margin:0 0 13px;flex-wrap:wrap}
+  .cardbar button{padding:4px 11px;font-size:13px}
+  #floats{position:fixed;right:15px;bottom:15px;z-index:50;display:flex;flex-direction:column;gap:7px}
+  #floats button{padding:6px 11px;background:#fff;box-shadow:0 2px 9px rgba(20,30,60,.16);
+    border-color:#d6dce6;font-size:12.5px;white-space:nowrap}
+  #floats button:hover{background:var(--ac2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>存档修改器 · 英雄立志传：三国志</h1>
+  <div class="sub">纯本地运行，不联网 · 改之前请先备份 <code>Save0.dat</code>（工具里也能一键下载备份）</div>
+
+  <div class="cardbar">
+    <button id="btnAllOpen">全部展开</button>
+    <button id="btnAllFold">全部收起</button>
+    <button id="btnFoldDefault">恢复默认（只留 ① 与 ⑩）</button>
+    <span class="badge">点标题即可折叠任意卡片，状态自动记住；折叠后右侧小标签仍会显示状态</span>
+  </div>
+
+  <div id="tabs">
+    <button class="tab" data-tab="common">常用功能</button>
+    <button class="tab" data-tab="hero">人物修改</button>
+    <button class="tab" data-tab="add">各种添加</button>
+    <button class="tab" data-tab="bag">背包管理</button>
+    <button class="tab" data-tab="title">称号与资源</button>
+    <button class="tab" data-tab="city">城市属性修改</button>
+    <button class="tab" data-tab="pet">宠物修改</button>
+    <button class="tab" data-tab="tool">搜索 / 对比</button>
+    <button class="tab" data-tab="note">使用方法</button>
+  </div>
+
+  <div class="card" id="cardLoad">
+    <h2>① 载入存档 <span class="tag" id="tagVer">等待文件</span>
+      <span class="tag">常用功能</span></h2>
+    <div id="drop">把 <b>Save0.dat / Save1.dat / Save2.dat</b>（或 Save1001+.dat）拖进来，或点下面的「选择存档文件」<br>
+      <span class="hint">路径：<code>%USERPROFILE%\AppData\LocalLow\FreeWing\ThreeKingdom\SaveData\</code></span></div>
+    <input type="file" id="f" style="display:none">
+    <div id="msgLoad"></div>
+    <div class="flex" style="margin-top:9px">
+      <button class="primary" id="btnPickFile">读取存档（选择文件）</button>
+      <button id="updCatBtn" title="读取游戏 Json + MODs + MODProjects，重新生成物品库（需用「三国存档修改器.exe」启动）">更新物品库</button>
+      <button id="btnBak" disabled>备份存档（下载原始备份）</button>
+      <span class="badge">改之前先点「备份存档」</span>
+    </div>
+  </div>
+
+  <div class="card" id="cardInfo" style="display:none">
+    <h2>存档信息</h2>
+    <div class="row"><div class="col"><div class="kv" id="infoKv"></div></div>
+    <div class="col"><div class="hint" id="infoHint"></div></div></div>
+  </div>
+
+  <div class="card" id="cardHero" style="display:none">
+    <h2>② 武将（<span id="heroCount">0</span> 位）<span class="tag wn">数值来自存档，非基础表</span></h2>
+    <div class="flex">
+      <input type="text" id="q" placeholder="搜索 姓名 / ID，例如 曹操、WJ10001" style="max-width:300px">
+      <button id="btnLocAll">定位全部六维</button>
+      <span class="badge" id="locStat"></span>
+    </div>
+    <div class="scroll" style="max-height:260px"><table id="tblHero">
+      <thead><tr><th style="width:120px">ID</th><th style="width:130px">姓名</th>
+      <th style="width:100px">所在城市</th><th style="width:70px">操作</th>
+      <th>六维（统率 / 武力 / 智略 / 政略 / 魅力 / 意志）</th></tr></thead><tbody></tbody>
+    </table></div>
+    <div id="delBar" class="badge" style="display:none;margin-top:6px"></div>
+    <div id="dynHeroBox" style="margin-top:11px;border-top:1px dashed var(--line);padding-top:9px">
+      <div style="margin-bottom:6px">
+        <b style="font-size:13px">游戏自己生成的武将</b>
+        <span class="tag" id="dynTag">0 位</span>
+        <span class="badge">游戏在开局 / 事件里随机生成的角色（家将、妻妾等），存在存档的独立区段，
+          ID 是 <code>WJ0</code>~<code>WJ99</code> 这样的短格式，所以不在上面那张主武将表里。
+          它们已经并入上面的主表（带「生成」徽章），<b>点这一行即可选中并到 ③ 修改属性</b>。
+          游戏再生成新角色，重新载入存档就会自动出现。</span>
+      </div>
+      <div class="scroll" style="max-height:180px"><table id="tblDyn">
+        <thead><tr><th style="width:78px">ID</th><th style="width:100px">姓名</th>
+        <th style="width:96px">生成模板</th><th style="width:92px">所在城市</th>
+        <th>六维（统/武/智/政/魅/意）</th>
+        <th style="width:92px">记录偏移</th></tr></thead><tbody></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <div class="card" id="cardEdit" style="display:none">
+    <h2>③ 修改 <span id="editWho" class="tag"></span></h2>
+    <div class="row">
+      <div class="col" style="flex:2 1 560px">
+        <div style="font-size:13px;color:var(--tx2);margin-bottom:6px">六维（统率 / 武力 / 智略 / 政略 / 魅力 / 意志）</div>
+        <div class="grid6" id="sixBox"></div>
+        <div style="font-size:13px;color:var(--tx2);margin:12px 0 6px">资质（六项成长上限）</div>
+        <div class="grid6" id="talBox"></div>
+        <div style="font-size:13px;color:var(--tx2);margin:12px 0 6px">其他</div>
+        <div class="grid6" id="othBox"></div>
+        <div style="font-size:13px;color:var(--tx2);margin:14px 0 6px">三魂点（军魂 / 武魂 / 智魂）</div>
+        <div class="grid6" id="sptBox"></div>
+        <div style="font-size:13px;color:var(--tx2);margin:12px 0 6px">三魂炼魂等级</div>
+        <div class="grid6" id="slvBox"></div>
+        <div style="font-size:13px;color:var(--tx2);margin:12px 0 6px">武器熟练（8 项，上限 300）</div>
+        <div class="grid6" id="mstBox"></div>
+        <div style="font-size:13px;color:var(--tx2);margin:12px 0 6px">特性等级（24 项，0-6）</div>
+        <div class="grid6" id="prfBox"></div>
+        <div class="hint" id="editHint" style="margin-top:11px"></div>
+      </div>
+      <div class="col">
+        <div class="fld" style="margin-bottom:9px">
+          <div class="lb">快捷操作</div>
+          <div class="flex" style="margin:7px 0 0">
+            <button id="btnSix100">六维全 100</button>
+            <button id="btnSixMax">六维全 300</button>
+            <button id="btnTalMax" title="资质上限 30（与六维上限 300 对应）">资质全 30</button>
+            <button id="btnSoulMax" title="三魂点 = 999999，同时把三个炼魂等级都设为 10">三魂拉满（点数 + 炼魂10）</button>
+            <button id="btnMstMax">熟练拉满</button>
+            <button id="btnPrfMax">特性拉满</button>
+            <button id="btnRevert">还原本武将</button>
+          </div>
+          <div class="badge" id="multiBlockHint" style="margin-top:3px"></div>
+        </div>
+        <div class="hint">
+          偏移核对（与基础表 Hero.json 逐项比对，1269 位武将）：
+          <br>资质 = 锚点 + ID长度 + 姓名字节数 + 8（100% 一致）
+          <br>道德 +0x44｜相性 +0x4C｜出生/登场/死亡 +0x51/+0x55/+0x59（均 100% 一致）
+          <br><b>量程</b>：六维 0–300｜资质 0–<b>30</b>（基础表里现成武将的资质只到 20，
+          那是预设值；游戏内可以长到 30，对应六维上限 300）。
+          <br>六维 = 所在城市串之后；<b>三魂点 = 六维+24</b>（80.2%）、
+          <b>熟练 = 六维+48</b>（98.0%）、<b>特性 = 六维+80</b>（99.0%），
+          差异都是游戏内已成长的部分。<br>
+          <b>「三魂炼魂等级」（六维+36，上限 10）</b>正好是 3 项、紧跟三魂点，与修改器里
+          「炼魂进度」的三个字段位置吻合。<b>点「三魂拉满」会同时把三魂点点满、三个炼魂等级设为 10</b>；
+          想单独调也可以在上面「三魂炼魂等级」那一组里逐个改。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="cardBag" style="display:none">
+    <h2>④ 背包 / 物品 <span class="tag" id="bagTag">未定位</span></h2>
+    <div class="hint" id="bagHint"></div>
+    <div class="flex" style="margin-top:9px">
+      <button id="btnBagQty">全部数量设为…</button>
+      <button id="btnBagRevert">还原背包改动</button>
+      <span class="badge" id="bagStat"></span>
+    </div>
+    <div id="bagBox"></div>
+    <div class="hint" style="margin-top:10px">
+      <b>说明</b>：背包是 13 个分类容器，每件物品记作 <code>[长度][ID][数量×int32][2×int32][int16]</code>。
+      「改数量」「换成别的物品」是安全的；<b>「添加 / 删除物品」会改变文件长度</b>（工具会重排这一段并更新容器计数，
+      导出前会重新解析核对）。分组是按游戏里实际的归类实测出来的，加错组物品可能在游戏里看不到，可随时删除重加。<br>
+      <b>物品库</b>来自游戏自带的 <code>StreamingAssets\Json</code>（装备 646 / 物品 335 / 书籍 114 / 动物 31 / 魂·战技·卡 1289），
+      加物品时可以直接按名字搜。
+    </div>
+  </div>
+
+  <div class="card" id="cardAdd" style="display:none">
+    <h2>各种添加 <span class="tag" id="addTag">未载入存档</span>
+      <span class="tag wn">添加会改变文件长度，导出前会自动重排并核对</span></h2>
+    <div class="addtabs" id="addTabs"></div>
+    <div class="addwrap">
+      <div class="main">
+        <select multiple id="addList" class="addlist" size="18"></select>
+        <div class="flex" style="margin-top:7px">
+          <button id="addAll">全选当前列表</button>
+          <button id="addNone">清空选择</button>
+          <button id="addAdv" title="等级 / 推荐组 等更多条件的批量筛选">更多筛选…</button>
+          <span class="badge" id="addStat"></span>
+        </div>
+      </div>
+      <div class="side">
+        <div class="lb" style="font-size:12px">名称 / ID 关键词</div>
+        <div class="flex" style="margin-top:4px">
+          <input type="text" id="addQ" placeholder="如 山纹 / WP1002 / 制造书" style="flex:1;min-width:0">
+          <button id="addFind">查找</button>
+        </div>
+        <div class="lb" style="font-size:12px;margin-top:10px">按 等级 / 价值 筛</div>
+        <div class="flex" style="margin-top:4px">
+          <select id="addLvLo" style="flex:1;min-width:0" title="等级下限"></select>
+          <select id="addLvHi" style="flex:1;min-width:0" title="等级上限"></select>
+        </div>
+        <div class="flex" style="margin-top:5px">
+          <input type="number" id="addVlLo" placeholder="价值 ≥" style="flex:1;min-width:0">
+          <input type="number" id="addVlHi" placeholder="价值 ≤" style="flex:1;min-width:0">
+        </div>
+        <div class="lb" style="font-size:12px;margin-top:10px">按魂占用筛</div>
+        <select id="addSpLo" style="width:100%;margin-top:4px"></select>
+        <div class="lb" style="font-size:12px;margin-top:10px">数量（自动按类型归组）</div>
+        <div class="flex" style="margin-top:4px">
+          <input type="number" id="addQty" value="1" min="1" max="9999" style="width:76px">
+          <button class="primary" id="addGo" style="flex:1">添加</button>
+        </div>
+        <div class="flex" style="margin-top:9px">
+          <button id="addClear" style="flex:1">清除</button>
+        </div>
+        <div class="hint" id="addHint" style="margin-top:8px"></div>
+      </div>
+    </div>
+  </div>
+
+<div class="card" id="cardFind" style="display:none">
+    <h2>⑤ 物品 / 数值 搜索</h2>
+    <div class="flex">
+      <select id="findKind" style="max-width:120px">
+        <option value="id">物品 / ID</option>
+        <option value="num">数值</option>
+      </select>
+      <input type="text" id="findVal" placeholder="物品ID如 WP10001 / SJ1000101，或数值如 12345" style="max-width:290px">
+      <select id="findType" style="max-width:120px">
+        <option value="i32">int32</option><option value="i16">int16</option><option value="f32">float</option>
+      </select>
+      <button id="btnFind" class="primary">搜索</button>
+      <span class="badge" id="findStat"></span>
+    </div>
+    <div class="scroll" style="max-height:360px"><table id="tblFind">
+      <thead><tr><th style="width:96px">偏移</th><th style="width:170px">内容</th>
+      <th style="width:220px">附近文本线索</th><th style="width:120px">紧随数值→</th>
+      <th style="width:130px">替换ID(等长)</th><th></th></tr></thead><tbody></tbody>
+    </table></div>
+    <div class="hint" id="findHint">
+      <b>物品 / ID 模式</b>：填物品 ID（如 <code>WP10001</code>、<code>WP10001ouia1</code>、<code>SJ1000101</code>），
+      会列出存档里所有出现位置，并显示「紧跟在 ID 后面的那个整数」——大多数物品条目这个位置就是<b>数量</b>，
+      直接改它即可。若想换物品，在「替换ID」里填一个<b>字节长度相同</b>的 ID（同长度的装备之间可以互换）。<br>
+      <b>数值模式</b>：填游戏里看到的数字（金钱、粮草、科技点…），会列出所有同值位置，
+      靠「附近文本线索」判断哪个是对的，然后改。<br>
+      <b>加物品</b>：用上面 ④「背包 / 物品」面板的「＋ 添加物品」，可以直接按名字搜（物品库 2796 条）。<br>
+      这里保留给「按 ID 精确定位某个位置」用。
+    </div>
+  </div>
+
+  <div class="card" id="cardDiff" style="display:none">
+    <h2>⑥ 与另一份存档对比（定位字段最省事的办法）</h2>
+    <div class="flex">
+      <button id="btnDiffPick">选择对照存档…</button>
+      <input type="file" id="diffFile" style="display:none">
+      <span class="badge" id="diffStat"></span>
+    </div>
+    <div class="scroll" style="max-height:300px"><table id="tblDiff">
+      <thead><tr><th style="width:120px">偏移</th><th>差异</th></tr></thead><tbody></tbody>
+    </table></div>
+  </div>
+
+  <div class="card" id="cardTitle" style="display:none">
+    <h2>⑦ 称号 / 资源数值 <span class="tag" id="titleTag">未定位</span></h2>
+    <div class="row">
+      <div class="col" style="flex:1 1 520px">
+        <div class="fld">
+          <div class="lb">装配称号（游戏称号面板里生效的那些，可加 / 删 / 换，数量不止一个）</div>
+          <div id="eqList" style="margin:6px 0"></div>
+          <div class="flex">
+            <input type="text" id="eqQ" placeholder="搜称号名，如 卧龙 / 太平" style="width:150px">
+            <select id="eqPick" style="max-width:360px"></select>
+            <span class="badge" id="eqCnt">—</span>
+            <button id="btnEqAdd">添加到装配列表</button>
+          </div>
+          <div class="titledesc" id="eqDesc" style="display:none"></div>
+          <div class="hint" id="eqHint" style="margin-top:7px">
+            下拉里就是<b>物品库里的全部称号</b>（含 MOD 称号），直接选就行 —— <b>不需要先放进背包</b>。
+            下面这个装配列表是<b>混排</b>的：除称号外还可能有军魂 / 智魂 / 装备等（会自动标出类型，悬停看说明）；
+            「换成所选」会把那条变成称号，删军魂前想清楚。添加 / 删除会改动文件长度（插入或移除条目字节并同步列表数）；
+            生成后请进游戏验证一次读档与称号生效。</div>
+        </div>
+        <div class="fld" style="margin-top:10px">
+          <div class="lb">展示称号（魂 / 装备装配列表里的那个 HTC 位，等长替换）</div>
+          <div id="titleNow" class="badge" style="margin:6px 0;display:block"></div>
+          <div class="flex">
+            <input type="text" id="titleQ" placeholder="搜称号名，如 卧龙 / 太平" style="width:150px">
+            <select id="titlePick" style="max-width:360px"></select>
+            <span class="badge" id="tpCnt">—</span>
+            <button id="btnTitleSet">替换为该称号</button>
+          </div>
+          <div class="titledesc" id="tpDesc" style="display:none"></div>
+          <div class="hint" id="titleHint" style="margin-top:7px"></div>
+        </div>
+        <div class="fld" style="margin-top:10px">
+          <div class="lb">背包中拥有的称号证书（组 9）</div>
+          <div id="titleOwn" class="badge" style="margin:6px 0;display:block"></div>
+          <div class="flex">
+            <input type="text" id="titleQ2" placeholder="搜称号名" style="width:150px">
+            <select id="titleAddPick" style="max-width:360px"></select>
+            <span class="badge" id="taCnt">—</span>
+            <button id="btnTitleAdd">添加到背包</button>
+            <button id="btnTitleAddAll" title="把当前筛选出的称号全部加入背包">批量加入筛选结果</button>
+          </div>
+          <div class="titledesc" id="taDesc" style="display:none"></div>
+          <div class="hint">下拉同样是<b>全部称号</b>。称号是唯一物品，背包里已有的会在选项上标「· 已有×数量」并拒绝重复添加。
+            这一块只在你<b>想让称号出现在游戏背包里</b>时才用；想直接让某个称号生效，用最上面的「替换为该称号」。<br>
+            这些称号在游戏背包里显示为 <b>称号证书</b>（可叠加），点「使用」后获得同名称号 ——
+            所以在「④ 批量添加物品」里按分类筛 <b>「称号证书」</b>也能找到它们。</div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="fld">
+          <div class="lb">资源数值（自动定位：金钱 / 策略点 / 科技点）</div>
+          <div id="resList" style="margin:6px 0"></div>
+          <div class="hint">载入存档后自动按结构定位（金钱在头部+资产块双份，策略/科技点在家族块）。
+            「当前值」请和游戏里对一眼，对得上再改，改完回 ⑩ 生成新存档。</div>
+        </div>
+        <div class="fld" style="margin-top:10px">
+          <div class="lb">其它数值手动定位（粮草 / 威名…）</div>
+          <div class="hint">在游戏里看到数值后填进来搜，定位到偏移就能直接改。改完记得回 ⑩ 生成新存档。
+            类型不确定就 int32 / float 各试一次。</div>
+          <div class="flex" style="margin-top:6px">
+            <input type="number" id="nvVal" placeholder="游戏里的数值" style="width:130px">
+            <select id="nvType" style="max-width:100px">
+              <option value="i32">int32</option><option value="u32">uint32</option>
+              <option value="f32">float</option><option value="i16">int16</option>
+            </select>
+            <button id="btnNvSearch">搜索</button>
+          </div>
+          <div class="flex" style="margin-top:6px">
+            <input type="number" id="nvNew" placeholder="改成" style="width:100px">
+            <select id="nvSlot" style="max-width:200px"></select>
+            <button id="btnNvSet">写入</button>
+            <button id="btnNvClear">清除该改写</button>
+          </div>
+          <div id="nvStat" class="badge" style="margin-top:6px;display:block"></div>
+          <div class="scroll" style="max-height:230px;margin-top:6px"><table id="tblNv">
+            <thead><tr><th style="width:110px">偏移</th><th style="width:100px">当前值</th><th>上下文</th></tr></thead>
+            <tbody></tbody>
+          </table></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="cardCity" style="display:none">
+    <h2>⑧ 城市属性 <span class="tag" id="cityTag">未定位</span></h2>
+    <div class="row">
+      <div class="col" style="flex:1 1 480px">
+        <div class="fld">
+          <div class="lb">选择城市（显示该城存档里的当前值）</div>
+          <div class="flex">
+            <input type="text" id="cityQ" placeholder="搜城市名 / ID，如 邪马台、洛阳、CS1066" style="width:190px">
+            <select id="cityPick" style="max-width:280px"></select>
+          </div>
+          <div id="cityInfo" class="badge" style="margin-top:7px;display:block"></div>
+        </div>
+        <div class="fld" style="margin-top:10px">
+          <div class="lb">说明</div>
+          <div class="hint">
+            · 资金 / 军粮 / 人口 / 治安 是每座城都存在、且能直接改的存档字段。<br>
+            · <b>民心</b>只在"有玩家的城"（你自己的城）里存，其它城不显示。<br>
+            · <b>商业 / 农业 / 城防</b>没在存档里直接存 —— 它们由城内建筑（市场 / 农田 / 城墙等）
+              和设施实时算出来，改存档数值改不动它们。想做这三项需要另外做"改建筑"功能。<br>
+            · 写入是定点改写（不改文件长度），改完回 ⑩ 生成并校验。
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="fld">
+          <div class="lb">属性修改</div>
+          <div id="cityFields" style="margin-top:6px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="cardPet" style="display:none">
+    <h2>⑨ 宠物 <span class="tag" id="petTag">未定位</span></h2>
+    <div class="row">
+      <div class="col" style="flex:1 1 540px">
+        <div class="fld">
+          <div class="lb">你的宠物（存档里的实例，不是品种表）</div>
+          <div class="scroll" style="max-height:250px"><table id="tblPet">
+            <thead><tr><th style="width:92px">品种</th><th style="width:96px">名字</th>
+              <th style="width:58px">编号</th><th style="width:56px">攻击</th><th style="width:56px">防御</th>
+              <th style="width:56px">速度</th><th style="width:74px">生命</th><th></th></tr></thead>
+            <tbody></tbody></table></div>
+          <div class="hint" style="margin-top:7px" id="petHint"></div>
+        </div>
+        <div class="fld" style="margin-top:10px">
+          <div class="lb">添加宠物（复制现有的一只，换新编号）</div>
+          <div class="flex">
+            <select id="petAddPick" style="max-width:320px"></select>
+            <button id="btnPetAdd">添加一只</button>
+            <button id="btnPetAddClear" style="display:none">清空待添加</button>
+          </div>
+          <div class="hint" id="petAddHint" style="margin-top:6px">
+            下拉是物品库里的<b>全部宠物品种</b>（含 MOD 加的，带 · MOD 标记）。<br>
+            · 已有品种 → 直接照你那只复制一份；<br>
+            · 没有的品种 → 拿你列表里的宠物当模板重建（名字/图标/属性按品种表，魂技等沿用模板）。<br>
+            添加会<b>改变文件长度</b>（和背包加物品同一原理）；生成后请先进游戏验证一次读档，
+            不满意用「撤销全部修改」即可，原档不受影响。
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="fld">
+          <div class="lb">属性修改（选中的那只）</div>
+          <div id="petFields" style="margin-top:6px"><span class="badge">载入存档后，点左边表格里的宠物</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="cardOut" style="display:none">
+    <h2>⑩ 校验并导出</h2>
+    <div class="flex">
+      <button class="primary" id="btnBuild">生成并校验新存档</button>
+      <button id="btnResetAll">撤销全部修改</button>
+    </div>
+    <div id="msgOut"></div>
+    <div class="flex" id="dlBox" style="display:none">
+      <button class="primary" id="btnDl">下载新存档</button>
+      <span class="badge">下载后覆盖回 SaveData 目录，文件名保持原样</span>
+    </div>
+  </div>
+
+  <div class="card" id="cardNote">
+    <h2>注意事项</h2>
+    <div class="hint">
+      1. <b>完全退出游戏</b>再改，改完再进游戏；游戏运行中改会被覆盖回去。<br>
+      2. 先备份。武将/背包改动都会先在内存里重排并自检，通过后才给你下载。<br>
+      3. 导出前会重新读一遍新存档做自检（版本戳、武将条数、所有字段回读、背包结构重解析），不通过不给下载。<br>
+      4. 六维是<b>存档里的当前值</b>（游戏里练过会比基础表高），不是攻略表里的基础值。<br>
+      5. 背包的「添加 / 删除物品」会改变文件长度，属实验性功能，<b>第一次用请先只加 1 件、进游戏确认无误</b>再批量操作。
+    </div>
+  </div>
+</div>
+
+<div id="floats">
+  <button id="btnFTop" title="回到顶部">↑ 顶部</button>
+  <button id="btnFOut" title="跳到导出">↓ 导出</button>
+  <button id="btnFFold" title="全部收起／展开">⇕ 折叠</button>
+</div>
+
+<div id="pickMask" style="display:none;position:fixed;inset:0;background:rgba(20,24,32,.45);z-index:50;padding:34px 16px;overflow:auto">
+  <div style="max-width:760px;margin:0 auto;background:#fff;border-radius:12px;padding:15px 18px;border:1px solid var(--line)">
+    <h2 style="font-size:15px;margin:0 0 11px;display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <span id="pickTitle">选择物品</span>
+      <button id="pickClose">关闭</button>
+    </h2>
+    <div class="flex">
+      <input type="text" id="pickQ" placeholder="搜索 物品名称 / ID，例如 长剑、WP10001、归城仙符" style="max-width:330px">
+      <select id="pickCat" style="max-width:150px"></select>
+      <span class="badge" id="pickStat"></span>
+    </div>
+    <div class="scroll" style="max-height:420px"><table id="tblPick">
+      <thead><tr><th style="width:150px">ID</th><th>名称</th>
+      <th style="width:88px">分类</th><th style="width:74px">魂占用</th>
+      <th style="width:84px">价值</th><th style="width:96px">推荐组</th><th style="width:52px">等级</th></tr></thead>
+      <tbody></tbody></table></div>
+  </div>
+</div>
+
+<div id="batchMask" style="display:none;position:fixed;inset:0;background:rgba(20,24,32,.45);z-index:60;padding:28px 16px;overflow:auto">
+  <div style="max-width:940px;margin:0 auto;background:#fff;border-radius:12px;padding:15px 18px;border:1px solid var(--line)">
+    <h2 style="font-size:15px;margin:0 0 11px;display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <span>批量添加物品</span>
+      <button id="batchClose">关闭</button>
+    </h2>
+    <div class="flex">
+      <select id="batchCat" style="max-width:172px" title="分类"></select>
+      <input type="text" id="batchQ" placeholder="名称 / ID 关键词（可留空）" style="max-width:210px">
+      <select id="batchGrpF" style="max-width:150px" title="按推荐组筛选（只显示推荐组匹配的物品）"></select>
+      <select id="batchGrp" style="max-width:190px" title="添加到背包的目标组（不筛选）"></select>
+      <input type="number" id="batchNum" value="1" min="1" max="999" style="max-width:82px" title="每件数量">
+    </div>
+    <div class="flex">
+      <span class="badge">等级</span>
+      <select id="batchLvLo" style="max-width:110px" title="等级下限"></select>
+      <select id="batchLvHi" style="max-width:110px" title="等级上限"></select>
+      <span class="badge">魂占用</span>
+      <select id="batchSpLo" style="max-width:116px" title="魂占用下限（只对魂/技有效）"></select>
+      <select id="batchSpHi" style="max-width:116px" title="魂占用上限（只对魂/技有效）"></select>
+      <span class="badge">价值</span>
+      <input type="number" id="batchVlLo" placeholder="下限不限" style="max-width:104px" title="价值下限">
+      <input type="number" id="batchVlHi" placeholder="上限不限" style="max-width:104px" title="价值上限">
+    </div>
+    <div class="hint" style="margin:-2px 0 8px">
+      分类按游戏三个战斗体系命名：<b>军战</b> = 军魂 / 军技，<b>武斗</b> = 武魂 / 武技，
+      <b>舌战</b> = 智魂 / 智技（括号里是条目数）。
+      <b>魂占用</b>就是游戏里显示的占用值（配置魂时占用魂容量），可用它筛选。
+    </div>
+    <div class="flex">
+      <button id="batchAll">全选匹配项</button>
+      <button id="batchUnowned">只选背包里没有的</button>
+      <button id="batchNone">全不选</button>
+      <button id="batchInv">反选</button>
+      <span class="badge" id="batchStat"></span>
+    </div>
+    <div class="scroll" style="max-height:400px"><table id="tblBatch">
+      <thead><tr><th style="width:42px">选</th><th style="width:150px">ID</th><th>名称</th>
+      <th style="width:88px">分类</th><th style="width:48px">等级</th>
+      <th style="width:74px">魂占用</th><th style="width:84px">价值</th>
+      <th style="width:96px">推荐组</th><th style="width:56px">状态</th></tr></thead>
+      <tbody></tbody></table></div>
+    <div class="flex" style="margin-top:11px">
+      <button class="primary" id="batchAdd">添加到背包</button>
+      <span class="badge">已在背包里的会自动跳过；数量统一按右上角那个数字</span>
+    </div>
+  </div>
+</div>
+
+<script src="物品库.js"></script>
+<script>
+"use strict";
+const TD=new TextDecoder('utf-8');
+const TDF=new TextDecoder('utf-8',{fatal:true});   // 严格模式：非法字节会抛错，用于结构识别
+const NAME_RE=/^[\u3400-\u9fff]{2,8}$/;
+/* 字段偏移：全部相对「资质块起点 talOff」 */
+const O_MORAL=0x44, O_COMPAT=0x4C, O_BIRTH=0x51, O_SHOW=0x55, O_DEATH=0x59;
+/* 以下全部相对「六维块起点 sixOff」 */
+const O_SOULPT=24, O_SOULLV=36, O_MASTER=48, O_PROF=80;
+const LAB_SOULPT=['军魂点','武魂点','智魂点'];
+const LAB_SOULLV=['军魂炼魂等级','武魂炼魂等级','智魂炼魂等级'];
+const LAB_MASTER=['长柄穿刺','长柄挥砍','短柄穿刺','短柄挥砍','远程','文官','艺术','盾'];
+const LAB_PROF=['短兵','枪兵','骑兵','弓兵','器械','水军','军学','商业','农业','建造','征兵','练兵',
+                '治安','巡访','城防','探索','外交','辩才','潜伏','科研','医术','酒力','旅游','驯兽'];
+const MAX_SOULPT=999999, MAX_SOULLV=10, MAX_MASTER=300, MAX_PROF=9;
+const u32=(b,o)=>(b[o]|b[o+1]<<8|b[o+2]<<16|b[o+3]<<24)>>>0;
+const i32=(b,o)=>b[o]|b[o+1]<<8|b[o+2]<<16|b[o+3]<<24;
+const i16=(b,o)=>{const v=b[o]|b[o+1]<<8;return v>=0x8000?v-0x10000:v;};
+const f32=(b,o)=>new DataView(b.buffer,b.byteOffset,b.byteLength).getFloat32(o,true);
+const putI32=(b,o,v)=>{b[o]=v&255;b[o+1]=(v>>8)&255;b[o+2]=(v>>16)&255;b[o+3]=(v>>24)&255;};
+const putI16=(b,o,v)=>{b[o]=v&255;b[o+1]=(v>>8)&255;};
+const putF32=(b,o,v)=>new DataView(b.buffer,b.byteOffset,b.byteLength).setFloat32(o,v,true);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const hx=(b,o,n)=>{let a=[];for(let i=0;i<n;i++)a.push(b[o+i].toString(16).padStart(2,'0'));return a.join(' ');};
+const $=id=>document.getElementById(id);
+
+/* ============ 卡片折叠（点标题展开/收起，状态自动记住） ============ */
+const FOLD_KEY='sg3k.fold.v1';
+const FOLD_KEEP=['cardLoad','cardOut'];        // 「恢复默认」时保持展开的卡片
+let FOLD={};                                    // id -> 1 表示收起
+function loadFold(){ try{ FOLD=JSON.parse(localStorage.getItem(FOLD_KEY)||'{}')||{}; }catch(e){ FOLD={}; } }
+function saveFold(){ try{ localStorage.setItem(FOLD_KEY,JSON.stringify(FOLD)); }catch(e){} }
+function paintFold(card){
+  const f=!!FOLD[card.id];
+  if(card.classList) card.classList.toggle('clp',f);
+  if(card.querySelector){
+    const c=card.querySelector('.caret');
+    if(c) c.textContent=f?'\u25B8':'\u25BE';
+  }
+}
+function setFold(id,f){
+  const card=$(id); if(!card) return;
+  if(f) FOLD[id]=1; else delete FOLD[id];
+  saveFold(); paintFold(card);
+}
+function toggleFold(id){ setFold(id,!FOLD[id]); }
+function showCard(id){ const c=$(id); if(c) c.style.display=''; }              // 只显示，不动折叠状态
+function hideCard(id){ const c=$(id); if(c) c.style.display='none'; }
+function openCard(id){ const c=$(id); if(!c) return; c.style.display=''; if(FOLD[id]) setFold(id,false); } // 显示并展开
+function allCards(){ return Array.prototype.slice.call(document.querySelectorAll('.card')); }
+function unfoldAll(){ FOLD={}; allCards().forEach(paintFold); saveFold(); }
+function foldOnly(keep){
+  allCards().forEach(c=>{ if(!c.id) return;
+    if((keep||[]).indexOf(c.id)>=0) delete FOLD[c.id]; else FOLD[c.id]=1;
+    paintFold(c); });
+  saveFold();
+}
+/* ================= 「各种添加」内嵌列表（2026-10-14）=================
+   分类页签 + 多选列表 + 关键词查找 + 魂占用/价值筛选 + 数量 / 目标组 + 添加 / 清除。
+   取代原来的「添加物品 / 批量添加」两个弹窗按钮（小K：那两个按钮是脱裤子放屁）。 */
+const ADD_TABS=[
+  ['武器',    ['武器','MOD武器']],
+  ['防具',    ['防具','MOD防具','头盔','MOD头盔','盾牌','MOD盾牌']],
+  ['饰品',    ['佩饰','MOD佩饰','坐骑','MOD坐骑']],
+  ['道具',    ['丹药符箓']],
+  ['重要',    ['任务道具','地图藏宝图']],
+  ['材料',    ['材料','建筑']],
+  ['其它',    ['书籍','礼物珍玩','话题']],
+  ['称号证书',['称号证书','MOD称号证书']],
+  ['制造书',  ['制造书','MOD制造书']],
+  ['军魂军技',['军魂','MOD军魂','军技']],
+  ['武魂武技',['武魂','MOD武魂','武技']],
+  ['智魂智技',['智魂','智技']]
+];
+let addTab=0;
+function addRenderTabs(){
+  const box=$('addTabs'); if(!box) return;
+  box.innerHTML=ADD_TABS.map((t,i)=>
+    '<button class="at'+(i===addTab?' on':'')+'" data-i="'+i+'">'+esc(t[0])+'</button>').join('');
+  Array.prototype.forEach.call(box.querySelectorAll('.at'),b=>{
+    b.onclick=()=>{ addTab=parseInt(b.getAttribute('data-i'),10)||0; addRenderTabs(); addRenderList(); };
+  });
+}
+function addRenderList(){
+  const sel=$('addList'); if(!sel) return;
+  if(!window.ITEM_CAT){ sel.innerHTML=''; if($('addStat')) $('addStat').textContent='物品库未载入'; return; }
+  const cats=ADD_TABS[addTab]?ADD_TABS[addTab][1]:null;
+  const q=(($('addQ')&&$('addQ').value)||'').trim().toLowerCase();
+  /* 筛选值统一处理：空串 / undefined / 非数字 一律当「不限」（否则会变成 NaN 把整表筛空） */
+  const pickNum=(id,int)=>{
+    const el=$(id); const raw=el?el.value:'';
+    if(raw===''||raw===null||raw===undefined) return null;
+    const n=int?parseInt(raw,10):parseFloat(raw);
+    return isFinite(n)?n:null;
+  };
+  const lvLo=pickNum('addLvLo',1), lvHi=pickNum('addLvHi',1);
+  const spLo=pickNum('addSpLo',1);
+  const vlLo=pickNum('addVlLo',0), vlHi=pickNum('addVlHi',0);
+  const out=[];
+  for(const id in ITEM_CAT){
+    const v=ITEM_CAT[id];
+    if(!validBagId(id)) continue;
+    if(cats && cats.indexOf(v[1])<0) continue;
+    if(q && !(id.toLowerCase().indexOf(q)>=0 || String(v[0]||'').toLowerCase().indexOf(q)>=0)) continue;
+    if(lvLo!==null || lvHi!==null){
+      const lv=parseInt(v[3],10);
+      if(!isFinite(lv)) continue;
+      if(lvLo!==null && lv<lvLo) continue;
+      if(lvHi!==null && lv>lvHi) continue;
+    }
+    const sp=itemSP(id);
+    if(spLo!==null && (sp===null||sp<spLo)) continue;
+    if(vlLo!==null || vlHi!==null){
+      const p=itemPrice(id);
+      if(p===null) continue;
+      if(vlLo!==null && p<vlLo) continue;
+      if(vlHi!==null && p>vlHi) continue;
+    }
+    out.push([id,v]);
+  }
+  out.sort((a,b)=>String(a[1][0]).localeCompare(String(b[1][0]),'zh'));
+  window.__addShown=out;                       // 供自测/调试
+  const N=Math.min(out.length,1200);
+  sel.innerHTML=out.slice(0,N).map(pair=>{
+    const id=pair[0], v=pair[1], sp=itemSP(id), p=itemPrice(id);
+    let lab=String(v[0]||id)+'   · '+id+'   ['+v[1];
+    if(sp!==null) lab+=' · 魂'+sp;
+    if(p!==null) lab+=' · 价'+p;
+    lab+=']';
+    return '<option value="'+esc(id)+'">'+esc(lab)+'</option>';
+  }).join('');
+  if($('addStat')) $('addStat').textContent=(out.length?('本页 '+N+' / '+out.length+' 条'):'没有匹配')+(BAG?'':'（未载入存档，暂不能加）');
+}
+function addGo(){
+  if(!BAG){ alert('先载入存档。'); return; }
+  const sel=$('addList'); if(!sel) return;
+  const ids=Array.prototype.filter.call(sel.options,o=>o.selected).map(o=>o.value);
+  if(!ids.length){ alert('先在左边列表里选物品（按住 Ctrl 或 Shift 可以多选）。'); return; }
+  let qty=parseInt($('addQty').value,10); if(!isFinite(qty)||qty<1) qty=1;
+  let n=0, skip=0;
+  for(const id of ids){
+    if(!validBagId(id)){ skip++; continue; }
+    const info=itemInfo(id);
+    let gi=info?info[2]:12;                       // 一律按物品库的推荐组归组
+    if(!(gi>=0&&gi<BAG.groups.length)) gi=12;
+    BAG.groups[gi].items.push({id:id,qty:qty,f2:0,f3:0,off:-1});
+    n++;
+  }
+  bagDirty=true; renderBag();
+  $('msgOut').innerHTML=ok('已添加 '+n+' 种物品（每种 '+qty+' 件）'+(skip?('，跳过 '+skip+' 条非法 ID'):'')+
+    '\n去「常用功能 → 校验并下载新存档」生成新档。');
+  addRenderList();
+}
+function addClear(){
+  ['addQ','addSpLo','addVlLo','addVlHi','addLvLo','addLvHi'].forEach(i=>{ if($(i)) $(i).value=''; });
+  if($('addQty')) $('addQty').value='1';
+  const sel=$('addList'); if(sel) Array.prototype.forEach.call(sel.options,o=>{o.selected=false;});
+  addRenderList();
+}
+function addInit(){
+  if(!$('addList')) return;
+  const lvs=new Set();
+  if(window.ITEM_CAT) for(const k in ITEM_CAT){
+    if(!validBagId(k)) continue;
+    const n=parseInt(ITEM_CAT[k][3],10); if(isFinite(n)) lvs.add(n);
+  }
+  const lvList=[...lvs].sort((a,b)=>a-b);
+  if($('addLvLo')) $('addLvLo').innerHTML='<option value="">等级（不限）</option>'+
+    lvList.map(n=>'<option value="'+n+'">等级 ≥ '+n+'</option>').join('');
+  if($('addLvHi')) $('addLvHi').innerHTML='<option value="">等级（不限）</option>'+
+    lvList.map(n=>'<option value="'+n+'">等级 ≤ '+n+'</option>').join('');
+  if($('addSpLo')) $('addSpLo').innerHTML='<option value="">魂占用（不限）</option>'+
+    spValues().map(n=>'<option value="'+n+'">魂占用 ≥ '+n+'</option>').join('');
+  if($('addHint')) $('addHint').innerHTML=
+    '左表按住 <b>Ctrl / Shift</b> 可多选，一次全加。<br>'+
+    '装备 / 称号证书一般填 <b>1</b>，材料可以填多。<br>'+
+    '<b>魂占用</b> = 配置魂时占用的魂容量，可用它筛。';
+  ['addQ','addVlLo','addVlHi'].forEach(id=>{ if($(id)) $(id).oninput=addRenderList; });
+  if($('addSpLo')) $('addSpLo').onchange=addRenderList;
+  if($('addLvLo')) $('addLvLo').onchange=addRenderList;
+  if($('addLvHi')) $('addLvHi').onchange=addRenderList;
+  if($('addFind')) $('addFind').onclick=addRenderList;
+  if($('addAll'))  $('addAll').onclick=()=>{ const s=$('addList'); Array.prototype.forEach.call(s.options,o=>{o.selected=true;}); };
+  if($('addNone')) $('addNone').onclick=()=>{ const s=$('addList'); Array.prototype.forEach.call(s.options,o=>{o.selected=false;}); };
+  if($('addGo'))   $('addGo').onclick=addGo;
+  if($('addClear'))$('addClear').onclick=addClear;
+  if($('addAdv'))  $('addAdv').onclick=()=>{ if(BAG) openBatch(); else alert('先载入存档。'); };
+  addRenderTabs(); addRenderList();
+}
+/* ================= 顶部大标签（2026-10-14 界面重构）=================
+   把卡片按功能分组，一次只显示一组；「载入存档」卡片始终可见。 */
+const TAB_CARDS={
+  common:['cardLoad','cardOut'],          // 读取存档 / 更新物品库 / 备份 / 校验下载新存档
+  hero  :['cardInfo','cardHero','cardEdit'],
+  add   :['cardAdd'],                     // 各种添加（添加 + 批量添加）
+  bag   :['cardBag'],
+  title :['cardTitle'],
+  city  :['cardCity'],
+  pet   :['cardPet'],
+  tool  :['cardFind','cardDiff'],
+  note  :['cardNote']
+};
+let curTab='common';
+function showTab(name){
+  if(!TAB_CARDS[name]) name='common';
+  curTab=name;
+  const all=[];
+  for(const k in TAB_CARDS) TAB_CARDS[k].forEach(id=>all.push(id));
+  all.forEach(id=>hideCard(id));
+  TAB_CARDS[name].forEach(id=>showCard(id));
+  Array.prototype.forEach.call(document.querySelectorAll('#tabs .tab'),b=>{
+    if(b.getAttribute('data-tab')===name) b.className='tab on'; else b.className='tab';
+  });
+  const t=document.getElementById('tabs');
+  if(t){ try{ t.scrollIntoView({block:'start'}); }catch(e){} }
+}
+function initTabs(){
+  Array.prototype.forEach.call(document.querySelectorAll('#tabs .tab'),b=>{
+    b.onclick=()=>showTab(b.getAttribute('data-tab'));
+  });
+  /* 更新物品库（只在用「三国存档修改器.exe」启动时可用） */
+  const ub=$('updCatBtn');
+  if(ub) ub.onclick=async()=>{
+    const old=ub.textContent; ub.disabled=true; ub.textContent='更新中…';
+    try{
+      const r=await fetch('/api/update-catalog',{method:'POST'});
+      const j=await r.json();
+      if(!j.ok) throw new Error(j.error||'更新失败');
+      alert('物品库已更新：\n'+j.summary+'\n\n页面即将刷新。');
+      location.reload();
+    }catch(e){
+      alert('更新失败：'+e.message+'\n\n「更新物品库」需要双击「三国存档修改器.exe」启动后再用；'+
+            '直接双击网页文件（file://）打开时，浏览器不允许网页调用本地脚本。');
+    }finally{ ub.disabled=false; ub.textContent=old; }
+  };
+  /* 物品添加：载入存档后刷新内嵌列表（原 qa* 快捷筛选已并入列表右侧栏） */
+  window.refreshQa=()=>{ try{ addRenderList(); }catch(e){} };
+  showTab(curTab);
+}
+function initFold(){
+  loadFold();
+  allCards().forEach((card,i)=>{
+    if(!card.id) card.id='cardAuto'+i;
+    const h2=Array.prototype.filter.call(card.children,c=>c.tagName==='H2')[0];
+    if(!h2) return;
+    if(!card.querySelector('.cbody')){
+      const body=document.createElement('div');
+      body.className='cbody';
+      Array.prototype.filter.call(card.children,c=>c!==h2).forEach(el=>body.appendChild(el));
+      card.appendChild(body);
+    }
+    if(!h2.querySelector('.caret')){
+      const sp=document.createElement('span');
+      sp.className='caret'; sp.textContent='\u25BE';
+      h2.insertBefore(sp,h2.firstChild);
+    }
+    h2.title='点击展开 / 收起这一段';
+    h2.addEventListener('click',()=>toggleFold(card.id));
+    paintFold(card);
+  });
+  const b=(id,fn)=>{ const el=$(id); if(el) el.onclick=fn; };
+  b('btnAllOpen',()=>unfoldAll());
+  b('btnAllFold',()=>foldOnly([]));
+  b('btnFoldDefault',()=>foldOnly(FOLD_KEEP));
+  b('btnFTop',()=>{ try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(e){ window.scrollTo(0,0); } });
+  b('btnFOut',()=>{ const c=$('cardOut'); if(!c) return;
+      c.style.display=''; openCard('cardOut');
+      try{ c.scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){} });
+  b('btnFFold',()=>{
+    const anyOpen=allCards().some(c=>c.id&&!FOLD[c.id]);
+    if(anyOpen) foldOnly([]); else unfoldAll();
+  });
+}
+try{ initFold(); }catch(e){}
+
+/* ============ 状态 ============ */
+let S=null;          // {buf, ver, slot, info, heroes:[{id,name,word,anc,span, sixOff|null, six:[..]}]}
+let fileName='';
+let sel=-1;
+let edits={};        // key -> value ; key = 'six0..5' / 'tal0..5' / 'moral' / 'compat' / 'birth' / 'show' / 'death' / 'raw:<off>'
+let heroEdits={};    // heroIndex -> {key:value}
+let pendingDel=null; // 待删除的重复武将 {id,name,start,end,idx,refs}
+const HERO_URL='F:/BaiduNetdiskDownload/LegendOfHeros/LegendOfHeros/ThreeKingdom_Data/StreamingAssets/Json/Hero.json';
+let HJSON=null;      // id -> 基础数据（若能用则用于提示）
+
+/* ============ 载入 ============ */
+$('drop').onclick=()=>$('f').click();
+if($('btnPickFile')) $('btnPickFile').onclick=()=>$('f').click();
+$('f').onchange=e=>{if(e.target.files[0])load(e.target.files[0]);};
+['dragenter','dragover'].forEach(ev=>$('drop').addEventListener(ev,e=>{e.preventDefault();$('drop').classList.add('over');}));
+['dragleave','drop'].forEach(ev=>$('drop').addEventListener(ev,e=>{e.preventDefault();$('drop').classList.remove('over');}));
+$('drop').addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)load(f);});
+
+function strAt(b,p){
+  if(p>=b.length) return null;
+  const n=b[p];
+  if(n===0) return {v:'',len:1};
+  if(n>200||p+1+n>b.length) return null;
+  try{
+    const v=TDF.decode(b.subarray(p+1,p+1+n));
+    if(/[\u0000-\u001F]/.test(v)) return null;
+    return {v,len:1+n};
+  }catch(e){ return null; }
+}
+/* ---- 版本戳（9 位 = YYYYMMDD + 0）----
+   202610020 = 游戏 1.0.6 及之前；202610060 = 游戏 1.0.9。
+   未在列表里的版本不再拒绝载入，只提示（所有字段都是结构化定位，不依赖固定偏移）。 */
+const KNOWN_VERS=[202610020, 202610060, 202610091];
+const VER_GAME={'202610020':'1.0.6 及之前','202610060':'1.0.9','202610091':'1.0.9 之后（10-09 更新）'};
+function verLabel(v){
+  const s=String(v);
+  return /^\d{9}$/.test(s) ? (s.slice(0,4)+'-'+s.slice(4,6)+'-'+s.slice(6,8)) : String(v);
+}
+function verGameName(v){
+  const s=String(v);
+  return VER_GAME[s] || '（未登记，按现有结构规则解析）';
+}
+function readHeader(b){
+  const ver=u32(b,0), slot=u32(b,4);
+  let p=8; const seq=[];
+  // 语法：字符串 / i32 / f32 三选一，按启发式前进
+  const limit=0x200;
+  while(p<limit){
+    const s=strAt(b,p);
+    if(s && s.len>1){ seq.push({t:'str',o:p,v:s.v}); p+=s.len; continue; }
+    const iv=i32(b,p);
+    if(iv>=-100000&&iv<=200000000){ seq.push({t:'i32',o:p,v:iv}); p+=4; continue; }
+    seq.push({t:'f32',o:p,v:f32(b,p)}); p+=4;
+  }
+  return {ver,slot,seq};
+}
+function parseHeroes(b){
+  const cand=[];
+  for(let i=0;i+12<b.length;i++){
+    const L=b[i];
+    if(L<7||L>16) continue;
+    if(b[i+1]!==0x57||b[i+2]!==0x4A) continue;            // 'WJ'
+    if(i+1+L+2>b.length) continue;
+    let id;
+    try{ id=TDF.decode(b.subarray(i+1,i+1+L)); }catch(e){ continue; }
+    if(!/^WJ\d{5,}$/.test(id)) continue;
+    const np=i+1+L;                                        // 姓名串的长度字节位置
+    const nl=b[np];
+    if(nl<6||nl>24) continue;
+    if(np+1+nl>b.length) continue;
+    let nm;
+    try{ nm=TDF.decode(b.subarray(np+1,np+1+nl)); }catch(e){ continue; }
+    if(!NAME_RE.test(nm)) continue;
+    const anc=i+1;
+    // 资质 = 锚点 + ID长度 + 姓名字节数 + 8（1字节空串 + 4字节 + 2字节）
+    const talOff=anc+L+nl+8;
+    if(talOff+0x60>b.length) continue;
+    const tal=[0,1,2,3,4,5].map(j=>i32(b,talOff+j*4));
+    const birth=i32(b,talOff+O_BIRTH), show=i32(b,talOff+O_SHOW), death=i32(b,talOff+O_DEATH);
+    const moral=i32(b,talOff+O_MORAL), compat=i32(b,talOff+O_COMPAT);
+    // 多重强约束：只有真正的记录锚点能全部满足
+    if(!(tal.every(v=>v>=0&&v<=100)
+         && b[talOff-1]===0 && b[talOff-2]===0
+         && birth>=100&&birth<=300 && show>=100&&show<=300
+         && death>=130&&death<=320 && death>birth
+         && moral>=-100&&moral<=100 && compat>=0&&compat<=200)) continue;
+    cand.push({id, name:nm, anc, idLen:L, nameLen:nl, talOff, sixOff:null});
+  }
+  // 同一 id 只保留首个（实测：合格的候选天然每个 id 唯一，位置严格递增）
+  const seen={}, out=[];
+  for(const h of cand){ if(seen[h.id]) continue; seen[h.id]=1; out.push(h); }
+  out.sort((a,b2)=>a.anc-b2.anc);
+  for(let k=0;k<out.length;k++) out[k].end=(k+1<out.length)?out[k+1].anc:b.length;
+  // 自建武将（玩家本人）：id 形如 NWJ0，后面跟「模型预设串 + 7字节口令 + 资质×6」
+  const pl=findPlayerRecord(b);
+  if(pl) out.unshift(pl);
+  return {heroes:out, all:cand.length};
+}
+function findPlayerRecord(b){
+  for(let i=0;i+12<b.length;i++){
+    const L=b[i];
+    if(L<3||L>16) continue;
+    if(b[i+1]!==0x4E||b[i+2]!==0x57||b[i+3]!==0x4A) continue;      // 'NWJ'
+    if(i+1+L>b.length) continue;
+    let id; try{ id=TDF.decode(b.subarray(i+1,i+1+L)); }catch(e){ continue; }
+    if(!/^NWJ\d+$/.test(id)) continue;
+    const ps=i+1+L, pl=b[ps];
+    if(pl>40||ps+1+pl+7+24>b.length) continue;
+    let preset; try{ preset=TDF.decode(b.subarray(ps+1,ps+1+pl)); }catch(e){ continue; }
+    if(/[\u0000-\u001F]/.test(preset)) continue;
+    const t=ps+1+pl+7;
+    if(!(b[t-7]===0 && b[t-6]===1 && b[t-5]===1)) continue;         // 7 字节口令 00 01 01 ...
+    const tal=[0,1,2,3,4,5].map(j=>i32(b,t+j*4));
+    if(!tal.every(v=>v>=0&&v<=100)) continue;
+    // 往回读 4 个串：别名 / 字 / 名 / 姓（id 之前正好 4 个串）
+    let p=i; const back=[];
+    for(let k=0;k<4;k++){
+      let found=-1;
+      for(let q=p-1;q>=Math.max(1,p-40);q--){
+        if(q+1+b[q]===p && b[q]<=24){ found=q; break; }
+        if(b[q]===0 && q+1===p){ found=q; break; }
+      }
+      if(found<0) break;
+      back.unshift(TD.decode(b.subarray(found+1,found+1+b[found])));
+      p=found;
+    }
+    const nm=(back[0]||'')+(back[1]||'');
+    return {id, name:nm||'自建武将', preset, anc:i+1, idLen:L, nameLen:pl, talOff:t,
+            sixOff:null, kind:'player', sixWin:0x600, end:b.length};
+  }
+  return null;
+}
+// 判断 pos 之前 700 字节内是否出现过「某条武将记录的起点」（[len] + WJ数字）
+/* ====== 自建武将记录：完整枚举（含 WJ10001ouia1 这类 ID 带后缀的记录）======
+   这类记录的 ID 不匹配 /^WJ\d{5,}$/，所以 parseHeroes 完全识别不到它们。
+   布局：[姓][名][字][别名][ID][模型预设][7字节口令 00 01 01 …][资质×6] … … */
+function findCustomHeroes(b){
+  const out=[];
+  for(let i=0;i+12<b.length;i++){
+    const L=b[i];
+    if(L<3||L>24) continue;
+    const c1=b[i+1],c2=b[i+2],c3=b[i+3];
+    if(!((c1===0x4E&&c2===0x57&&c3===0x4A)||(c1===0x57&&c2===0x4A))) continue;
+    let id; try{ id=TDF.decode(b.subarray(i+1,i+1+L)); }catch(e){ continue; }
+    if(!/^(NWJ\d+|WJ\d{5,}[A-Za-z_][0-9A-Za-z_]*)$/.test(id)) continue;
+    const ps=i+1+L, pl=b[ps];
+    if(pl>40||ps+1+pl+7+24>b.length) continue;
+    let preset; try{ preset=TDF.decode(b.subarray(ps+1,ps+1+pl)); }catch(e){ continue; }
+    if(/[\u0000-\u001F]/.test(preset)) continue;
+    const t=ps+1+pl+7;
+    if(!(b[t-7]===0&&b[t-6]===1&&b[t-5]===1)) continue;
+    const tal=[0,1,2,3,4,5].map(j=>i32(b,t+j*4));
+    if(!tal.every(v=>v>=0&&v<=100)) continue;
+    let p=i; const back=[];
+    for(let k=0;k<4;k++){                       // 往回读 4 个串：别名/字/名/姓
+      let found=-1;
+      for(let q=p-1;q>=Math.max(1,p-40);q--){
+        if(q+1+b[q]===p && b[q]<=24){ found=q; break; }
+        if(b[q]===0 && q+1===p){ found=q; break; }
+      }
+      if(found<0) break;
+      back.unshift({off:found,v:TD.decode(b.subarray(found+1,found+1+b[found]))});
+      p=found;
+    }
+    out.push({id, name: back.length>=2 ? (back[0].v+back[1].v) : '自建武将',
+      preset, idOff:i, idLen:L, talOff:t, tal,
+      anc: back.length ? back[0].off : i});
+  }
+  out.sort((a,b2)=>a.anc-b2.anc);
+  return out;
+}
+/* NPC 表起点：从 from 之后找第一条 WJ2xxxx 记录，再往回推到它的记录起点。
+   必须带 from —— 文件更前面也有 WJ2xxxx 的「引用」，从头扫会找错。 */
+function findNPCStart(b,from){
+  from=from||0;
+  for(let i=Math.max(0,from);i+8<b.length;i++){
+    const L=b[i];
+    if(L<5||L>16) continue;
+    if(b[i+1]!==0x57||b[i+2]!==0x4A||b[i+3]!==0x32) continue;
+    let id; try{ id=TDF.decode(b.subarray(i+1,i+1+L)); }catch(e){ continue; }
+    if(!/^WJ2\d+$/.test(id)) continue;
+    // 紧跟一个中文串（NPC 的别名），才说明这是「记录定义」而不是列表里的引用
+    const q=i+1+L, nl=b[q];
+    if(nl<6||nl>24) continue;
+    let nx; try{ nx=TDF.decode(b.subarray(q+1,q+1+nl)); }catch(e){ continue; }
+    if(!/^[一-龥]{2,8}$/.test(nx)) continue;
+    let end=i; const parts=[];
+    for(let k=0;k<4;k++){
+      let f=-1;
+      for(let t=end-1;t>=Math.max(0,end-40);t--){ if(t+1+b[t]===end){ f=t; break; } }
+      if(f<0) break;
+      parts.unshift({off:f,v:TD.decode(b.subarray(f+1,f+1+b[f]))});
+      end=f;
+    }
+    return parts.length?parts[0].off:i;
+  }
+  return b.length;
+}
+/* 完整的自建武将记录（带 start / end 字节区间） */
+function customRecords(b){
+  const cs=findCustomHeroes(b);
+  if(!cs.length) return cs;
+  const last=cs[cs.length-1];
+  let npc=findNPCStart(b,last.idOff);
+  if(npc<=last.anc) npc=0;                     // 找不到就置 0，调用方需判断 end<=start
+  for(let k=0;k<cs.length;k++) cs[k].end=(k+1<cs.length)?cs[k+1].anc:npc;
+  cs[cs.length-1].ok = npc>last.anc;
+  return cs;
+}
+/* 找出所有「count 自洽的 ID 列表」里对某个 ID 的引用 */
+function findIDListRefs(b,id){
+  const out=[];
+  const isID=q=>{
+    const L=b[q]; if(L<3||L>24) return null;
+    let s; try{ s=TDF.decode(b.subarray(q+1,q+1+L)); }catch(e){ return null; }
+    if(!/^(WJ|NWJ)[0-9A-Za-z_]+$/.test(s)) return null;
+    return {s,L};
+  };
+  let p=0;
+  while(p<b.length){
+    const a=isID(p); if(!a){ p++; continue; }
+    let q=p+1+a.L; const items=[a.s];
+    for(let k=0;k<4000;k++){ const c=isID(q); if(!c) break; items.push(c.s); q+=1+c.L; }
+    if(items.length>=2 && i32(b,p-4)===items.length){
+      let o=p;
+      for(let k=0;k<items.length;k++){
+        if(items[k]===id) out.push({listStart:p,itemStart:o,itemEnd:o+1+id.length,
+          cntOff:p-4,cnt:items.length,idx:k,items:items.slice()});
+        o+=1+items[k].length;
+      }
+    }
+    p=q;
+  }
+  return out;
+}
+function afterHeroAnchor(b,pos){
+  /* 判断 pos 之前 700 字节内是不是已经「越过了玩家记录、进入主表某条武将记录」。
+     必须严格：主表 ID 形如 WJ10001 / WJ1010002（WJ + ≥5 位数字）且后面紧跟着姓名串。
+     玩家自己的记录里会内嵌「短 ID 引用列表」（如 [04]WJ24 + int32 值 × 5，
+     是家将 / 相关角色引用），旧版只要求 /^WJ\d+$/ 会把它误判成武将记录，
+     导致玩家六维一个候选都扫不到。 */
+  for(let q=pos-1;q>=Math.max(1,pos-700);q--){
+    const L=b[q];
+    if(L<7||L>16) continue;                            // 主表 ID 至少 WJ+5 位数字
+    if(q+1+L>b.length) continue;
+    if(b[q+1]!==0x57||b[q+2]!==0x4A) continue;         // 'WJ'
+    let s2; try{ s2=TDF.decode(b.subarray(q+1,q+1+L)); }catch(e){ continue; }
+    if(!/^WJ\d{5,}$/.test(s2)) continue;               // 短 id（WJ24 之类）是引用，不是记录起点
+    const np=q+1+L, nl=b[np];
+    if(nl<6||nl>24||np+1+nl>b.length) continue;
+    let nm; try{ nm=TDF.decode(b.subarray(np+1,np+1+nl)); }catch(e){ continue; }
+    if(!NAME_RE.test(nm)) continue;                    // 后面真的跟着姓名串才算一条武将记录
+    return true;
+  }
+  return false;
+}
+function sixCands(b,h){
+  // 收集「本武将记录」范围内所有「CS10xx + 6 个 1..300 的整数 + 完整签名」的块
+  const from=h.talOff;
+  const to=(h.kind==='player') ? Math.min(b.length, h.talOff+0x8000)
+           : (h.sixWin ? Math.min(b.length, h.talOff+h.sixWin) : h.end);
+  const out=[];
+  for(let p=from;p+96<=to;p++){
+    if(b[p]!==0x43||b[p+1]!==0x53||b[p+2]!==0x31||b[p+3]!==0x30) continue;   // 'CS1'
+    if(b[p-1]!==6) continue;
+    let cs; try{ cs=TDF.decode(b.subarray(p,p+6)); }catch(e){ continue; }
+    if(!/^CS1\d\d\d$/.test(cs)) continue;
+    const q=p+6;
+    const v=[0,1,2,3,4,5].map(j=>i32(b,q+j*4));
+    if(!v.every(x=>x>=1&&x<=300)) continue;
+    const sp=[0,1,2].map(j=>i32(b,q+O_SOULPT+j*4));
+    const sl=[0,1,2].map(j=>i32(b,q+O_SOULLV+j*4));
+    const ms=[0,1,2,3,4,5,6,7].map(j=>i32(b,q+O_MASTER+j*4));
+    const pf=[0,1,2,3].map(j=>i32(b,q+O_PROF+j*4));
+    const sig = sp.every(x=>x>=0&&x<=999999) && sl.every(x=>x>=0&&x<=99)
+             && ms.every(x=>x>=0&&x<=300) && pf.every(x=>x>=0&&x<=9);
+    // 玩家：跳过已经进入下一条武将记录的块（例如紧跟 WJ0 记录之后的那个）
+    if(h.kind==='player' && afterHeroAnchor(b,p)) break;
+    out.push({off:q, cs:cs, vals:v, sig:sig});
+  }
+  return out;
+}
+function locateSix(b,h){
+  const all=sixCands(b,h);
+  if(!all.length) return null;
+  const good=all.filter(x=>x.sig);
+  const pool=good.length? good : all;
+  if(h.kind==='player'){
+    // 玩家记录里通常有 2 个块（「当前状态」和「另一份配置」），城市会随移动变化
+    // 优先选「城市 == 存档头部当前地点」的那个
+    let pick=null;
+    const place=(S&&S.info)?S.info.place:'';
+    const cid=(place && window.CITY_ID) ? window.CITY_ID[place] : null;
+    if(cid) pick=pool.find(x=>x.cs===cid)||null;
+    if(!pick) pick=pool[0];
+    return {off:pick.off, vals:pick.vals, cs:pick.cs,
+            all:pool.map(x=>({off:x.off,cs:x.cs,vals:x.vals}))};
+  }
+  if(pool.length===1) return {off:pool[0].off, vals:pool[0].vals, cs:pool[0].cs};
+  const yr=S?S.info.year:null;
+  for(const c of pool){
+    if(c.off-19>=0 && yr!=null && i32(b,c.off-15)===yr && i32(b,c.off-11)===1)
+      return {off:c.off, vals:c.vals, cs:c.cs};
+  }
+  return {off:pool[0].off, vals:pool[0].vals, cs:pool[0].cs};
+}
+function load(file){
+  fileName=file.name;
+  const fr=new FileReader();
+  fr.onload=()=>{
+    try{
+      const buf=new Uint8Array(fr.result);
+      const ver=u32(buf,0);
+      const verOK=(KNOWN_VERS.indexOf(ver)>=0);
+      /* 版本戳 = YYYYMMDD + 0。本工具全部字段都是结构化定位（不依赖固定偏移），
+         所以遇到没见过的版本戳只提示、不阻断，避免游戏一更新就用不了。 */
+      if(!verOK) console.warn('未知版本戳 '+ver+'，将按现有结构规则尝试解析');
+      if(ver<200000000||ver>299999999) throw new Error('这个文件不像本游戏的存档（版本戳 = '+ver+'）。');
+      const hd=readHeader(buf);
+      const sArr=hd.seq.filter(x=>x.t==='str');
+      const strs=sArr.map(x=>x.v);
+      const dateS=sArr.find(x=>/^\d{4}\/\d+\/\d+ \d+:\d+/.test(x.v));
+      const gameS=sArr.find(x=>/^\d+年\d+月\d+日$/.test(x.v));
+      let ri=3;
+      while(ri<strs.length && strs[ri].length<2) ri++;   // 跳过 '-' 这类占位
+      const info={
+        ver:hd.ver, slot:hd.slot,
+        player:strs[1]||'', place:strs[2]||'', modelPreset:strs[0]||'',
+        role:strs[ri]||'', scenario:strs[ri+1]||'', scenarioBase:strs[ri+2]||'',
+        dateStr:dateS?dateS.v:'', gameDate:gameS?gameS.v:'',
+        year:null
+      };
+      // 年份 = 存档时间字符串之前最近的那个 100..300 的 i32
+      if(dateS){
+        const before=hd.seq.filter(x=>x.t==='i32'&&x.o<dateS.o);
+        for(let k=before.length-1;k>=0;k--){ const v=before[k].v; if(v>=100&&v<=300){ info.year=v; break; } }
+      }
+      if(info.year==null){ const ii=hd.seq.filter(x=>x.t==='i32').map(x=>x.v); info.year=ii[4]!==undefined?ii[4]:0; }
+      const hp=parseHeroes(buf);
+      const baseN=hp.heroes.length;   // parseHeroes 能识别的条数（不含下面补进去的自建记录）
+      // 补上 parseHeroes 识别不到的自建武将记录（ID 带后缀，如 WJ10001ouia1）
+      try{
+        const cust=customRecords(buf);
+        const pl=cust.find(c=>/^NWJ\d+$/.test(c.id));
+        if(pl && hp.heroes[0] && hp.heroes[0].kind==='player'){
+          hp.heroes[0].start=pl.anc; hp.heroes[0].end=pl.end;
+        }
+        const extra=cust.filter(c=>!/^NWJ\d+$/.test(c.id)).map(c=>({
+          id:c.id, name:c.name, preset:c.preset, anc:c.anc, idLen:c.idLen,
+          nameLen:c.preset.length, talOff:c.talOff, sixOff:null,
+          kind:'custom', start:c.anc, end:c.end }));
+        // 紧跟玩家记录插入，方便一眼看到重复项
+        for(let i=extra.length-1;i>=0;i--) hp.heroes.splice(1,0,extra[i]);
+      }catch(e){ /* 探测失败不影响其它功能 */ }
+      let dynList=[];
+      try{ dynList=scanDynHeroes(buf); }catch(e){ dynList=[]; }
+      const mainN=hp.heroes.length;
+      /* 生成武将并入同一份列表（追加在末尾，前面主武将的索引不受影响），
+         这样它们和主武将共用同一套「选中 → ③ 编辑 → ⑩ 生成」流程。 */
+      S={buf, info, heroes:(dynList.length?hp.heroes.concat(dynList):hp.heroes),
+         allHits:hp.all, baseN, mainN, dynHeroes:dynList};
+      const nMainText=mainN, nDynText=dynList.length;
+      // 载入时就把六维全部定位好（一条记录一次扫描，很快）；生成武将已在扫描时定位
+      for(const h of S.heroes){
+        if(h.kind==='dyn') continue;
+        const c=locateSix(buf,h);
+        if(c){ h.sixOff=c.off; h.sixCs=c.cs||null; }
+      }
+      edits={};heroEdits={};sel=-1;pendingDel=null;
+      loadBag(buf);
+      renderInfo(); renderHeroList(); 
+      $('cardInfo').style.display=''; $('cardHero').style.display=''; $('cardBag').style.display='';
+      $('cardEdit').style.display='none'; $('cardFind').style.display='';
+      $('cardDiff').style.display=''; $('cardPet').style.display=''; $('cardOut').style.display='';
+      scanTitles(); scanRes(); scanEqt(); renderTitle();
+      try{ scanCities(); renderCity(); }catch(e){ /* 城市定位失败不影响其它功能 */ }
+      try{ scanPets(); renderPets(); }catch(e){ /* 宠物定位失败不影响其它功能 */ }
+      /* 载入后：刷新「物品添加」右上角的快捷筛选，并按当前标签重排卡片显隐 */
+      try{ if(window.refreshQa) refreshQa(); }catch(e){}
+      try{ showTab(curTab); }catch(e){}
+      if($('addTag')) $('addTag').className='tag ok';
+      if($('addTag')) $('addTag').textContent='已载入 · 物品库 '+(window.ITEM_CAT?Object.keys(ITEM_CAT).length:0)+' 条';
+      $('btnBak').disabled=false;
+      $('tagVer').textContent='版本 '+verGameName(hd.ver)+' · 戳 '+verLabel(hd.ver)+' · 槽位 '+hd.slot;
+      $('tagVer').className = verOK ? 'tag ok' : 'tag wn';
+      $('tagVer').title = '版本戳 '+hd.ver+'（格式 YYYYMMDD+0）';
+      $('msgLoad').innerHTML=ok(`载入成功：${file.name}（${buf.length.toLocaleString()} 字节）\n`+
+        `游戏版本 ${verGameName(hd.ver)} · 版本戳 ${hd.ver}（${verLabel(hd.ver)}）· 存档槽 ${hd.slot}\n`+
+        `识别出武将 ${nMainText} 位（文件中 ID 出现 ${hp.all} 次，其中记录锚点 ${nMainText} 个）`+
+        `${nDynText?('，另有游戏自己生成的武将 '+nDynText+' 位'):''}。`)+
+        (verOK?'':wn('注意：这个版本戳（'+hd.ver+'）还没登记过（已登记：'+
+          KNOWN_VERS.map(v=>v+' '+verGameName(v)).join(' / ')+'）。\n'+
+          '工具会按现有结构规则解析，但改完请务必先小改一处、进游戏验证读档正常再大批量操作。'));
+      $('msgOut').innerHTML='';$('dlBox').style.display='none';
+    }catch(e){
+      S=null;
+      $('tagVer').textContent='载入失败';$('tagVer').className='tag wn';
+      $('msgLoad').innerHTML=er('载入失败：'+e.message);
+      ['cardInfo','cardHero','cardEdit','cardFind','cardDiff','cardTitle','cardCity','cardPet','cardOut'].forEach(hideCard);
+    }
+  };
+  fr.readAsArrayBuffer(file);
+}
+const ok=t=>'<div class="msg ok">'+esc(t)+'</div>';
+const wn=t=>'<div class="msg wn">'+esc(t)+'</div>';
+const er=t=>'<div class="msg er">'+esc(t)+'</div>';
+
+$('btnBak').onclick=()=>dl(new Blob([S.buf],{type:'application/octet-stream'}),fileName.replace(/(\.dat)?$/,'')+'.bak.dat');
+
+function renderInfo(){
+  const i=S.info;
+  const rows=[['游戏版本',verGameName(i.ver)],['版本戳',i.ver+'（'+verLabel(i.ver)+'）'],
+    ['存档槽',i.slot],['模型预设',i.modelPreset],['玩家',i.player],
+    ['当前地点',i.place],['身份',i.role],['剧本',i.scenario],
+    ['剧本底本',i.scenarioBase],['游戏年份',i.year],['存档时间',i.dateStr],['游戏内日期',i.gameDate]];
+  $('infoKv').innerHTML=rows.map(r=>
+    `<label>${esc(r[0])}</label><div><b>${esc(r[1])}</b></div>`).join('');
+      $('infoHint').innerHTML=
+    '存档开头是「全局状态」段，接着是 76 条城市→势力颜色表，然后就是武将表（共 '+(S.mainN!=null?S.mainN:S.heroes.length)+' 条主武将记录）。<br><br>'+
+    '每条武将记录以「ID + 姓名」开头，字段偏移都相对记录内部的<b>资质块起点</b>：'+
+    '<span class="mono">资质 ×6 (+0)</span>、<span class="mono">道德 (+0x44)</span>、'+
+    '<span class="mono">相性 (+0x4C)</span>、<span class="mono">出生/登场/死亡年 (+0x51/+0x55/+0x59)</span>；'+
+    '<b>六维</b>在「所在城市」字符串之后，已全部自动定位（成功 '+S.heroes.filter(h=>h.sixOff!=null).length+'/'+S.heroes.length+'）。<br><br>'+
+    '带「生成」徽章的是<b>游戏自己生成的武将</b>（家将 / 随机角色），记录结构不同于主表，'+
+    '可改六维与三魂点 / 炼魂 / 精通 / 熟练；它们没有独立资质块。<br><br>'+
+    '列表第一行带 ★ 的是<b>你自己的自建武将</b>（id 形如 NWJ0，单独识别出来的）。<br><br>'+
+    '本工具的字段偏移是用基础表 Hero.json 反查校准过的：1269 位武将的资质与基础表<b>逐项一致率 100%</b>，'+
+    '六维除游戏内已练过的以外也全部对上。';
+}
+
+/* ============ 武将列表 ============ */
+function heroName(h){return h.name;}
+/* ---- 游戏自己生成的武将（家将 / 随机角色）----
+   记录格式：[03]姓(3字节UTF-8) [03]名 [00] [len]简介 [len]id(WJ0~WJ99 短格式) [len]模板名("随机男/女NNN")
+   这类角色不在主武将表的 [len]WJxxxxx 锚点里（ID 短、格式不同），所以主表搜不到。
+   判别：后面跟的模板名必须是「随机男/女+数字」—— 主表武将同名结构后面跟的是本人姓名，会被排除。 */
+function isHan3(b,o){
+  if(o+2>=b.length) return false;
+  const c1=b[o];
+  return c1>=0xe4&&c1<=0xe9&&((b[o+1]&0xc0)===0x80)&&((b[o+2]&0xc0)===0x80);
+}
+function scanDynHeroes(b){
+  const td=new TextDecoder('utf-8',{fatal:false});
+  const out=[]; const seen={};
+  for(let i=0;i+16<b.length;i++){
+    if(b[i]!==3) continue;
+    if(!isHan3(b,i+1)) continue;
+    if(b[i+4]!==3||!isHan3(b,i+5)) continue;
+    if(b[i+8]!==0) continue;
+    const o=i+9;
+    const L=b[o];
+    if(!(8<=L<=0x90)) continue;
+    if(o+1+L+2>=b.length) continue;
+    const d0=b[o+1];
+    if(!(d0>=0xe4&&d0<=0xe9)) continue;              // 简介应以汉字开头
+    const p=o+1+L;
+    const IL=b[p];
+    if(!(3<=IL<=8)) continue;
+    let sid='';
+    for(let j=0;j<IL;j++){ const c=b[p+1+j]; if(c<33||c>126) break; sid+=String.fromCharCode(c); }
+    if(!/^WJ\d{1,6}$/.test(sid)) continue;
+    const p2=p+1+IL;
+    if(p2+1>=b.length) continue;
+    const TL=b[p2];
+    if(!(4<=TL<=20)) continue;
+    let tpl='';
+    try{ tpl=td.decode(b.subarray(p2+1,p2+1+TL)); }catch(e){ continue; }
+    if(!/^随机[男女]\d{1,3}$/.test(tpl)) continue;    // ★ 只有游戏生成的角色才有这个模板名
+    if(seen[sid]) continue;
+    seen[sid]=1;
+    let surname='',given='';
+    try{ surname=td.decode(b.subarray(i+1,i+4)); given=td.decode(b.subarray(i+5,i+8)); }catch(e){ continue; }
+    out.push({id:sid, name:surname+given, surname, given, tpl,
+              off:i, anc:p+1, descOff:o+1, descLen:L, idOff:p+1,
+              tplEnd:p2+1+TL, kind:'dyn', sixOff:null, sixCs:null});
+  }
+  out.sort((a,z)=>a.off-z.off);
+  /* 属性块定位：记录头之后、下一条记录头之前，第一个「[06]CS1xxx + 合法字段签名」的块。
+     实测每条生成武将都恰好有一个（+0x150~0x310 之间），与主武将的记录结构同构：
+     六维 ×6 (+0) / 军魂·武魂·智魂点 ×3 (+24) / 三魂炼魂等级 ×3 (+36) / 精通 ×8 (+48) / 熟练 ×24 (+80)。 */
+  for(let k=0;k<out.length;k++){
+    out[k].end=(k+1<out.length)?out[k+1].anc:b.length;
+    locateDynSix(b,out[k],out[k].end);
+  }
+  return out;
+}
+/* 生成武将的六维块定位（可单独复用：选中时 / 「定位全部六维」时） */
+function locateDynSix(b,h,nextOff){
+  if(h.kind!=='dyn'||h.tplEnd==null) return null;
+  try{
+    const hi=Math.min((nextOff!=null?nextOff:b.length), h.tplEnd+0x2400, b.length);
+    const cands=sixCands(b,{talOff:h.tplEnd, end:hi, kind:'dyn'});
+    const good=cands.filter(x=>x.sig);
+    const pick=good.length?good[0]:(cands.length?cands[0]:null);
+    if(pick){ h.sixOff=pick.off; h.sixCs=pick.cs; return pick.off; }
+  }catch(e){ /* 定位失败不影响其它 */ }
+  return null;
+}
+function renderDynHeroes(){
+  const box=$('dynHeroBox'); if(!box) return;
+  const items=[];
+  ((S&&S.heroes)||[]).forEach((h,k)=>{ if(h.kind==='dyn') items.push({h,k}); });
+  const tag=$('dynTag');
+  if(tag) tag.textContent=items.length+' 位';
+  const tb=$('tblDyn').querySelector('tbody');
+  const q=($('q').value||'').trim().toLowerCase();
+  const shown=items.filter(o=>!q||o.h.name.toLowerCase().includes(q)||o.h.id.toLowerCase().includes(q));
+  tb.innerHTML='';
+  if(!items.length){
+    tb.innerHTML='<tr><td colspan="6" class="badge">这份存档里还没有游戏生成的武将</td></tr>';
+    return;
+  }
+  if(!shown.length){
+    tb.innerHTML='<tr><td colspan="6" class="badge">没有匹配的生成武将</td></tr>';
+    return;
+  }
+  shown.forEach(({h,k})=>{
+    const tr=document.createElement('tr');
+    if(k===sel) tr.className='sel';
+    const city=h.sixCs?((window.CITY_NAME&&window.CITY_NAME[h.sixCs])||h.sixCs):'—';
+    const six=(h.sixOff!=null)
+      ? '<span class="mono">'+sixVals(k).join(' / ')+'</span>'
+      : '<span class="badge wn">未定位</span>';
+    tr.innerHTML='<td class="mono">'+esc(h.id)+'</td>'+
+      '<td><b>'+esc(h.name)+'</b></td>'+
+      '<td><span class="badge">'+esc(h.tpl)+'</span></td>'+
+      '<td>'+esc(city)+'</td>'+
+      '<td>'+six+'</td>'+
+      '<td class="mono badge">0x'+h.anc.toString(16).toUpperCase()+'</td>';
+    tr.style.cursor='pointer';
+    tr.title='点击选中这位武将，到 ③ 面板修改属性';
+    tr.onclick=()=>selectHero(k);
+    tb.appendChild(tr);
+  });
+}
+function renderHeroList(){
+  const q=($('q').value||'').trim().toLowerCase();
+  const tb=$('tblHero').querySelector('tbody');
+  tb.innerHTML='';
+  let shown=0;
+  S.heroes.forEach((h,k)=>{
+    if(q && !(h.id.toLowerCase().includes(q)||h.name.toLowerCase().includes(q))) return;
+    shown++;
+    const tr=document.createElement('tr');
+    if(k===sel) tr.className='sel';
+    const city = h.sixCs ? ((window.CITY_NAME&&window.CITY_NAME[h.sixCs])||h.sixCs) : '—';
+    const isCus = h.kind==='custom';
+    const willDel = pendingDel && pendingDel.idx===k;
+    let st;
+    if(h.sixOff==null) st='<span class="badge">未定位（点上方「定位全部六维」，或选中该武将自动定位）</span>';
+    else st='<span class="mono">'+sixVals(k).join(' / ')+'</span>';
+    tr.innerHTML=`<td class="mono">${h.kind==='player'?'<b>'+esc(h.id)+'</b>':esc(h.id)}</td>
+      <td>${h.kind==='player'?'★ ':''}${h.kind==='dyn'?'<span class="badge">生成</span> ':''}${isCus?'<span style="color:var(--wn)">⚠ </span>':''}${esc(h.name)}</td>
+      <td>${esc(city)}</td>
+      <td>${isCus?(willDel?'<span style="color:var(--wn)">待删除</span>'
+                          :'<button class="sm" data-del="'+k+'">删除</button>'):''}</td>
+      <td>${st}</td>`;
+    if(willDel) tr.style.opacity='.45';
+    tr.onclick=()=>selectHero(k);
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll('[data-del]').forEach(btn=>{
+    btn.onclick=(ev)=>{ ev.stopPropagation(); askDelete(parseInt(btn.getAttribute('data-del'),10)); };
+  });
+  const nMain=(S.mainN!=null)?S.mainN:S.heroes.length;
+  const nDyn=S.heroes.length-nMain;
+  $('heroCount').textContent=nMain+(nDyn?(' + '+nDyn+' 生成'):'');
+  $('locStat').textContent='已定位六维：'+S.heroes.filter(h=>h.sixOff!=null).length+' / '+S.heroes.length+' 位'+
+    (S.heroes.some(h=>h.kind==='custom')?('（其中 ⚠ 标记的是重复的自建武将记录，共 '+
+      S.heroes.filter(h=>h.kind==='custom').length+' 条）'):'');
+  renderDynHeroes();
+}
+$('q').addEventListener('input',renderHeroList);
+
+/* ====== 删除重复的武将记录 ====== */
+function spliceBuf(src,start,end){
+  if(isNaN(start)||isNaN(end)||start<0||end>src.length||end<start)
+    throw new Error('删除区间无效：0x'+start.toString(16)+' ~ 0x'+end.toString(16)+'（文件 '+src.length+' 字节）');
+  if(end===start) return new Uint8Array(src);   // 零长度删除 = 原样复制
+  const out=new Uint8Array(src.length-(end-start));
+  out.set(src.subarray(0,start),0);
+  out.set(src.subarray(end),start);
+  return out;
+}
+function askDelete(k){
+  const h=S.heroes[k]; if(!h) return;
+  if(h.kind!=='custom'){
+    alert('只允许删除带 ⚠ 标记的「重复自建武将」记录。\n你操控的主角（ID 形如 NWJ0）不给删，避免把档弄坏。');
+    return;
+  }
+  if(!(h.end>h.start)){
+    alert('这条记录没能确定安全的结束边界（NPC 表没定位到），拒绝删除，以免把档弄坏。');
+    return;
+  }
+  const refs=findIDListRefs(S.buf,h.id);
+  const city=h.sixCs?((window.CITY_NAME&&window.CITY_NAME[h.sixCs])||h.sixCs):'未知';
+  const msg='确定删除这条重复的武将记录吗？\n\n'+
+    'ID：'+h.id+'\n姓名：'+h.name+'\n所在城市：'+city+'\n'+
+    '字节区间：0x'+h.start.toString(16)+' ~ 0x'+h.end.toString(16)+
+    '（'+(h.end-h.start).toLocaleString()+' 字节）\n'+
+    '连带清理列表引用：'+refs.length+' 处\n\n'+
+    '主角（NWJ0）不受影响。确认后到最底部「生成并校验」导出新档。';
+  if(!confirm(msg)) return;
+  pendingDel={id:h.id,name:h.name,start:h.start,end:h.end,idx:k,refs,city};
+  built=null; if($('dlBox')) $('dlBox').style.display='none';
+  renderDelBar(); renderHeroList();
+}
+function renderDelBar(){
+  const el=$('delBar'); if(!el) return;
+  if(!pendingDel){ el.style.display='none'; el.innerHTML=''; return; }
+  const d=pendingDel;
+  el.style.display='';
+  el.innerHTML='<span style="color:var(--wn)">⚠ 待删除：'+esc(d.id)+' '+esc(d.name)+'（'+esc(d.city)+'）　'+
+    '记录 0x'+d.start.toString(16)+' ~ 0x'+d.end.toString(16)+'（'+(d.end-d.start).toLocaleString()+
+    ' 字节），连带清理 '+d.refs.length+' 处列表引用。</span>'+
+    ' <button class="sm" id="btnDelCancel">取消</button>';
+  $('btnDelCancel').onclick=()=>{ pendingDel=null; built=null; renderDelBar(); renderHeroList(); };
+}
+
+function selectHero(k){
+  sel=k;
+  const h=S.heroes[k];
+  if(h.sixOff==null){
+    if(h.kind==='dyn'){ locateDynSix(S.buf,h,h.end); }
+    else{ const c=locateSix(S.buf,h); if(c){ h.sixOff=c.off; h.sixCs=c.cs||null; } }
+  }
+  renderHeroList();
+  renderEdit();
+  openCard('cardEdit');
+  try{ $('cardEdit').scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){}
+}
+$('btnLocAll').onclick=()=>{
+  if(!S) return;
+  let n=0;
+  for(const h of S.heroes){
+    if(h.sixOff!=null) continue;
+    if(h.kind==='dyn'){ if(locateDynSix(S.buf,h,h.end)!=null) n++; continue; }
+    const c=locateSix(S.buf,h);
+    if(c){ h.sixOff=c.off; h.sixCs=c.cs||null; n++; }
+  }
+  renderHeroList();
+  if(sel>=0) renderEdit();
+  alert('新定位 '+n+' 位武将的六维。');
+};
+
+/* ============ 编辑 ============ */
+function HE(k){ // 取该武将的编辑对象
+  if(!(k in heroEdits)) heroEdits[k]={};
+  return heroEdits[k];
+}
+function sixVals(k){
+  const h=S.heroes[k], e=heroEdits[k]||{};
+  const out=[];
+  for(let j=0;j<6;j++){
+    const key='six'+j;
+    if(key in e) out.push(e[key]);
+    else out.push(h.sixOff!=null?i32(S.buf,h.sixOff+j*4):0);
+  }
+  return out;
+}
+const LAB_SIX=['统率','武力','智略','政略','魅力','意志'];
+const LAB_TAL=['统率资质','武力资质','智略资质','政略资质','魅力资质','意志资质'];
+/* 量程：六维 1..300；资质 0..30（游戏内资质上限 30，与六维上限 300 对应。基础表 Hero.json 里
+   现成武将的资质只到 20，那是预设值，玩家在游戏内可继续成长到 30） */
+const SIX_MAX=300, TAL_MAX=30;
+function renderEdit(){
+  if(sel<0) return;
+  const h=S.heroes[sel], e=heroEdits[sel]||{};
+  $('editWho').textContent=h.id+' '+h.name;
+  // 六维
+  if(h.sixOff==null){
+    $('sixBox').innerHTML='<div class="msg wn">这位武将的六维块没能自动定位，请用「定位全部六维」或改用⑤数值搜索。</div>';
+  }else{
+    $('sixBox').innerHTML=LAB_SIX.map((lb,j)=>{
+      const cur=('six'+j) in e?e['six'+j]:i32(S.buf,h.sixOff+j*4);
+      return `<div class="fld"><div class="lb">${lb}</div>
+        <input type="number" id="six${j}" value="${cur}" min="0" max="${SIX_MAX}"></div>`;
+    }).join('');
+    LAB_SIX.forEach((lb,j)=>{
+      $('six'+j).oninput=()=>{
+        const v=parseInt($('six'+j).value,10); if(!isFinite(v))return;
+        if(v===i32(S.buf,h.sixOff+j*4)) delete HE(sel)['six'+j]; else HE(sel)['six'+j]=v;
+        renderHeroList();
+      };
+    });
+  }
+  // 资质（游戏生成的武将没有独立资质块：资质由生成模板决定，存档里不单独存）
+  if(h.kind==='dyn'){
+    $('talBox').innerHTML='<div class="msg wn">这位是<b>游戏生成的武将</b>，记录里没有独立的「资质块」'+
+      '（资质由生成模板「'+esc(h.tpl)+'」决定，存档不单独保存），所以这一组不可编辑。<br>'+
+      '下面「特性 / 生产」里的六维、三魂点、炼魂等级、精通、熟练都是可以改的。</div>';
+  }else{
+    $('talBox').innerHTML=LAB_TAL.map((lb,j)=>{
+      const o=h.talOff+j*4;
+      const cur=('tal'+j) in e?e['tal'+j]:i32(S.buf,o);
+      return `<div class="fld"><div class="lb">${lb}</div>
+        <input type="number" id="tal${j}" value="${cur}" min="0" max="${TAL_MAX}"></div>`;
+    }).join('');
+    LAB_TAL.forEach((lb,j)=>{
+      const o=h.talOff+j*4;
+      $('tal'+j).oninput=()=>{
+        const v=parseInt($('tal'+j).value,10); if(!isFinite(v))return;
+        if(v===i32(S.buf,o)) delete HE(sel)['tal'+j]; else HE(sel)['tal'+j]=v;
+      };
+    });
+  }
+  // 其他
+  const other=[['道德',O_MORAL,'moral',-100,100],['相性',O_COMPAT,'compat',0,200],
+    ['出生年',O_BIRTH,'birth',100,300],['登场年',O_SHOW,'show',100,300],['死亡年',O_DEATH,'death',130,320]];
+  if(h.kind==='dyn'){
+    $('othBox').innerHTML='<div class="msg wn">同理：道德 / 相性 / 生卒年字段没有在该记录中找到，这一组不可编辑。</div>';
+  }else{
+    $('othBox').innerHTML=other.map(([lb,off,key,mi,ma])=>{
+      const o=h.talOff+off;
+      const cur=(key in e)?e[key]:i32(S.buf,o);
+      return `<div class="fld"><div class="lb">${lb} <span class="badge">资质+0x${off.toString(16)}</span></div>
+        <input type="number" id="oth_${key}" value="${cur}" min="${mi}" max="${ma}"></div>`;
+    }).join('');
+    other.forEach(([lb,off,key])=>{
+      const o=h.talOff+off;
+      $('oth_'+key).oninput=()=>{
+        const v=parseInt($('oth_'+key).value,10); if(!isFinite(v))return;
+        if(v===i32(S.buf,o)) delete HE(sel)[key]; else HE(sel)[key]=v;
+      };
+    });
+  }
+  // 三魂点 / 炼魂等级 / 熟练 / 特性（全部相对六维块）
+  const GROUPS=[
+    {box:'sptBox', key:'spt', off:O_SOULPT, lab:LAB_SOULPT, max:MAX_SOULPT},
+    {box:'slvBox', key:'slv', off:O_SOULLV, lab:LAB_SOULLV, max:MAX_SOULLV},
+    {box:'mstBox', key:'mst', off:O_MASTER, lab:LAB_MASTER, max:MAX_MASTER},
+    {box:'prfBox', key:'prf', off:O_PROF,   lab:LAB_PROF,   max:MAX_PROF},
+  ];
+  const base=h.sixOff;
+  GROUPS.forEach(g=>{
+    if(base==null){ $(g.box).innerHTML='<div class="msg wn">六维块未定位，本组无法编辑（可先点「定位全部六维」）。</div>'; return; }
+    $(g.box).innerHTML=g.lab.map((lb,j)=>{
+      const o=base+g.off+j*4;
+      const cur=((g.key+j) in e)?e[g.key+j]:i32(S.buf,o);
+      return `<div class="fld"><div class="lb">${lb}</div>
+        <input type="number" id="${g.key}${j}" value="${cur}" min="0" max="${g.max}"></div>`;
+    }).join('');
+    g.lab.forEach((lb,j)=>{
+      const o=base+g.off+j*4;
+      $(g.key+j).oninput=()=>{
+        const v=parseInt($(g.key+j).value,10); if(!isFinite(v))return;
+        if(v===i32(S.buf,o)) delete HE(sel)[g.key+j]; else HE(sel)[g.key+j]=v;
+      };
+    });
+  });
+  const mb=$('multiBlockHint');
+  if(mb){
+    mb.textContent = h.sixOff==null ? '' : '属性块 0x'+h.sixOff.toString(16).toUpperCase()+(h.sixCs?('（城市 '+h.sixCs+'）'):'');
+  }
+  $('editHint').innerHTML=
+    '记录锚点 <span class="mono">0x'+h.anc.toString(16)+'</span>（ID '+h.id+
+    (h.kind==='dyn'?' · 游戏生成 · 模板 '+esc(h.tpl):'')+'）｜'+
+    (h.kind==='dyn'?'资质块 <span class="badge">该记录无</span>｜'
+                   :'资质块 <span class="mono">0x'+h.talOff.toString(16)+'</span>｜')+
+    (h.sixOff!=null?'六维块 <span class="mono">0x'+h.sixOff.toString(16)+'</span>':'六维块未定位')+
+    '｜记录结束 <span class="mono">0x'+h.end.toString(16)+'</span>（'+((h.end-h.anc)/1024).toFixed(1)+' KB）';
+}
+$('btnSix100').onclick=()=>{ if(sel<0)return; const e=HE(sel); for(let j=0;j<6;j++) e['six'+j]=100; renderEdit(); renderHeroList(); };
+$('btnSixMax').onclick=()=>{ if(sel<0)return; const e=HE(sel); for(let j=0;j<6;j++) e['six'+j]=300; renderEdit(); renderHeroList(); };
+$('btnTalMax').onclick=()=>{ if(sel<0)return; const e=HE(sel); for(let j=0;j<6;j++) e['tal'+j]=TAL_MAX; renderEdit(); };
+$('btnSoulMax').onclick=()=>{
+  if(sel<0) return;
+  const e=HE(sel);
+  for(let j=0;j<3;j++) e['spt'+j]=MAX_SOULPT;   // 军魂点 / 武魂点 / 智魂点
+  for(let j=0;j<3;j++) e['slv'+j]=MAX_SOULLV;   // 三个炼魂等级一起顶到 10
+  renderEdit();
+};
+$('btnMstMax').onclick=()=>{ if(sel<0)return; const e=HE(sel); for(let j=0;j<8;j++) e['mst'+j]=MAX_MASTER; renderEdit(); };
+$('btnPrfMax').onclick=()=>{ if(sel<0)return; const e=HE(sel); for(let j=0;j<24;j++) e['prf'+j]=6; renderEdit(); };
+$('btnRevert').onclick=()=>{ if(sel<0)return; delete heroEdits[sel]; renderEdit(); renderHeroList(); };
+
+/* ============ 背包 / 物品 ============ */
+const BTE=new TextEncoder();
+const BAG_NGRP=13;
+const BAG_MAX_ITEMS=3000;      // 单个容器的条数上限（正常存档每组 0~50，留足余量给批量添加）
+/* 背包条目的 ID 规则。踩过两次坑，现在是「宽松 + 必须含数字」：
+   · 2026-10-13 ①：魂技容器里有 `DCard9`（字母 + 1 位数字），早期写死 {2,9} 会把真背包整条判非法；
+   · 2026-10-13 ②：锻造出来的 MOD 装备实例叫 `WP10006ouia1_FORGE_1`（20 字符），
+     早期「数字后只能是 ≤7 位尾串」的规则同样判非法 → 定位到别的「像背包」结构，
+     表现就是「货物/材料那一栏空空如也」。
+   现在：首字符字母，其余字母数字下划线，长度 3~40，且**至少含一个数字**（防止把纯文本当 ID）。 */
+const ID_RE=/^(?=[A-Za-z0-9_]*[0-9])[A-Za-z][A-Za-z0-9_]{2,39}$/;
+const DEF_GRP={0:'武器',1:'防具',2:'佩饰',3:'坐骑',4:'头盔',5:'盾牌',6:'任务道具/特殊',
+               7:'礼物珍玩',8:'书籍',9:'称号/丹药符箓/制造书',10:'话题',11:'魂与技（军/武/智）',12:'材料物资'};
+function grpLabel(g){ return (window.GRP_LABEL&&window.GRP_LABEL[g])||DEF_GRP[g]||('容器'+g); }
+function itemInfo(id){
+  if(window.ITEM_CAT&&window.ITEM_CAT[id]) return window.ITEM_CAT[id];
+  /* 锻造出来的实例：`<基础装备ID>_FORGE_<序号>`（例 WP10006ouia1_FORGE_1）——
+     物品库里没有这种动态 id，退回基础装备的名字，标个「锻造件」以免显示成一串乱码。 */
+  if(typeof id==='string'){
+    const m=id.match(/^(.+)_FORGE_(\d+)$/);
+    if(m&&window.ITEM_CAT&&window.ITEM_CAT[m[1]]){
+      const b=window.ITEM_CAT[m[1]];
+      return [b[0]+'（锻造件 '+m[2]+'）', b[1], b[2], b[3], b[4], '锻造件', -1];
+    }
+  }
+  return null;
+}
+// 只有符合背包条目规则的 ID 才能写进背包（读的时候用同一套规则校验）
+function validBagId(id){
+  return typeof id==='string' && id.length>=4 && id.length<=40 && ID_RE.test(id);
+}
+// 魂占用（= 表里的 soulPoint，已由小K在游戏内确认为占用值）；非魂/技返回 null
+function itemSP(id){
+  const v=itemInfo(id);
+  if(!v||v.length<7) return null;
+  const n=v[6];
+  return (typeof n==='number'&&n>=0)?n:null;
+}
+function itemSPText(id){ const n=itemSP(id); return n===null?'—':String(n); }
+// 价值（装备/物品/书籍/动物取 price，魂/技取 value）
+function itemPrice(id){
+  const v=itemInfo(id);
+  if(!v) return null;
+  const n=parseInt(v[4],10);
+  return isFinite(n)?n:null;
+}
+function itemPriceText(id){
+  const n=itemPrice(id);
+  return n===null?'—':n.toLocaleString();
+}
+function spValues(){
+  const set=new Set();
+  if(window.ITEM_CAT) for(const k in ITEM_CAT){
+    if(!validBagId(k)) continue;
+    const v=ITEM_CAT[k];
+    if(v.length>6 && typeof v[6]==='number' && v[6]>=0) set.add(v[6]);
+  }
+  return [...set].sort((a,b)=>a-b);
+}
+// 分类下拉（带条数，两个字的标签光看名字分不清）
+function catOptions(){
+  if(!window.ITEM_CAT) return '<option value="全部">全部</option>';
+  const cnt={}; let all=0;
+  for(const k in ITEM_CAT){
+    if(!validBagId(k)) continue;
+    const c=ITEM_CAT[k][1]; cnt[c]=(cnt[c]||0)+1; all++;
+  }
+  const list=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]);
+  let h='<option value="全部">全部（'+all+'）</option>';
+  for(const c of list) h+='<option value="'+esc(c)+'">'+esc(c)+'（'+cnt[c]+'）</option>';
+  return h;
+}
+
+let BAG=null;          // {start,end,groups:[{off,n,items:[{id,qty,f2,f3,off}],end}]}
+let bagDirty=false;
+
+function bagEntry(b,p){
+  const N=b.length;
+  if(p<0||p>=N) return null;
+  const L=b[p];
+  if(L<4||L>45||p+1+L+10>N) return null;
+  let id;
+  try{ id=TDF.decode(b.subarray(p+1,p+1+L)); }catch(e){ return null; }
+  if(!ID_RE.test(id)) return null;
+  const e=p+1+L;
+  const qty=i32(b,e);
+  if(qty<0||qty>1000000) return null;
+  /* f2 是 4 字节自由字段：2026-10-10 实测新版本存档里有条目 f2 = 0x666D0000（二进制数据），
+     早期版本里它恰好都是 0，所以曾用 `f2<=1000000` 做校验 —— 那会把真背包整条判为非法，
+     导致 findBag 退而求其次选到「长得像背包」的其它结构（这正是改档后游戏读不进去的根因）。
+     现在只保留 f3 的有符号读法，不再限制 f2。 */
+  const f2=i32(b,e+4);
+  return {id, qty, f2, f3:i16(b,e+8), next:e+10};
+}
+function bagWalk(b,p0,cnt){
+  let p=p0; const gs=[];
+  for(let gi=0;gi<cnt;gi++){
+    if(p+4>b.length) return null;
+    const n=i32(b,p);
+    if(n<0||n>BAG_MAX_ITEMS) return null;
+    let q=p+4; const items=[];
+    for(let k=0;k<n;k++){
+      const e=bagEntry(b,q);
+      if(!e) return null;
+      items.push({id:e.id, qty:e.qty, f2:e.f2, f3:e.f3, off:q});
+      q=e.next;
+    }
+    gs.push({off:p, n:n, items:items, end:q});
+    p=q;
+  }
+  return {groups:gs, end:p};
+}
+function bagScore(gs){
+  const nonEmpty=gs.filter(g=>g.n>0).length;
+  const tot=gs.reduce((a,g)=>a+g.n,0);
+  return {nonEmpty, tot};
+}
+function bagKnown(gs){
+  // 物品库命中率：真正的背包里几乎所有 ID 都能在物品库里查到
+  if(!window.ITEM_CAT) return null;
+  let tot=0, hit=0;
+  for(const g of gs) for(const it of g.items){ tot++; if(ITEM_CAT[it.id]) hit++; }
+  return tot? hit/tot : 0;
+}
+function bagValidate(gs){
+  const s=bagScore(gs);
+  if(!(s.nonEmpty>=5 && s.tot>=6)) return false;
+  const k=bagKnown(gs);
+  if(k!==null && k<0.5) return false;
+  return true;
+}
+function findBag(b){
+  let best=null;
+  // 1) 从 NWJ（玩家自建武将）锚点往后找
+  const anchors=[];
+  for(let i=0;i+4<b.length;i++){
+    if(b[i+1]!==0x4E||b[i+2]!==0x57||b[i+3]!==0x4A) continue;
+    const L=b[i];
+    if(L<3||L>16) continue;
+    let id; try{ id=TDF.decode(b.subarray(i+1,i+1+L)); }catch(e){ continue; }
+    if(/^NWJ\d+$/.test(id)) anchors.push(i+1);
+    if(anchors.length>60) break;
+  }
+  for(const anc of anchors){
+    const lim=Math.min(b.length-BAG_NGRP*6, anc+40000);
+    for(let p=anc;p<lim;p++){
+      const v=i32(b,p);
+      if(v<=0||v>BAG_MAX_ITEMS) continue;
+      const r=bagWalk(b,p,BAG_NGRP);
+      if(!r) continue;
+      if(!bagValidate(r.groups)) continue;
+      const s=bagScore(r.groups);
+      if(!best||s.tot>best.tot){
+        best={start:p, end:r.end, groups:r.groups, tot:s.tot, ne:s.nonEmpty};
+      }
+    }
+    /* 只有候选「足够像真背包」才提前收工；否则继续，让后面的全局扫兜底。
+       2026-10-10：新版本里真背包曾因一个 f2 字段被判非法，而锚点附近恰好有个「像背包」的
+       其它结构，提前 return 就会把它当成背包 —— 这是改档读不进去的根因之一。 */
+    if(best && best.tot>=250 && best.ne>=10) return {start:best.start, end:best.end, groups:best.groups};
+  }
+  // 2) 全局粗扫兜底
+  for(let p=4;p+8<b.length;p++){
+    const v=i32(b,p);
+    if(v<=0||v>BAG_MAX_ITEMS) continue;
+    const r=bagWalk(b,p,BAG_NGRP);
+    if(!r) continue;
+    if(!bagValidate(r.groups)) continue;
+    const s=bagScore(r.groups);
+    if(!best||s.tot>best.tot) best={start:p, end:r.end, groups:r.groups, tot:s.tot, ne:s.nonEmpty};
+  }
+  return best? {start:best.start, end:best.end, groups:best.groups} : null;
+}
+function serBag(groups){
+  let size=0;
+  for(const g of groups){ size+=4; for(const it of g.items) size+=1+it.id.length+10; }
+  const out=new Uint8Array(size);
+  let p=0;
+  for(const g of groups){
+    putI32(out,p,g.items.length); p+=4;
+    for(const it of g.items){
+      const L=it.id.length;
+      out[p]=L;
+      for(let k=0;k<L;k++) out[p+1+k]=it.id.charCodeAt(k)&255;
+      putI32(out,p+1+L, it.qty);
+      putI32(out,p+5+L, it.f2|0);
+      putI16(out,p+9+L, it.f3|0);
+      p+=1+L+10;
+    }
+  }
+  return out;
+}
+function bagClone(groups){
+  return groups.map(g=>({off:g.off,n:g.n,end:g.end,
+    items:g.items.map(it=>({id:it.id,qty:it.qty,f2:it.f2,f3:it.f3,off:it.off}))}));
+}
+function bagCounts(list){
+  const c={}; for(const k of list) c[k]=(c[k]||0)+1; return c;
+}
+function loadBag(b){
+  BAG=null; bagDirty=false;
+  const r=findBag(b);
+  if(r){
+    BAG={start:r.start, end:r.end, groups:bagClone(r.groups),
+         oldByGrp:r.groups.map(g=>g.items.map(it=>it.id+'#'+it.qty))};
+  }
+  renderBag();
+}
+
+function renderBag(tag){
+  const card=$('cardBag');
+  if(!S){ card.style.display='none'; return; }
+  card.style.display='';
+  if(!BAG){
+    $('bagTag').textContent='未定位';
+    $('bagTag').className='tag wn';
+    $('bagHint').innerHTML='<div class="msg wn">没能自动定位背包（可能是存档结构变了，或这档还没有自建武将）。'+
+      '你仍然可以用 ⑤ 的「物品 / ID 搜索」按 ID 定位并改数量。</div>';
+    $('bagBox').innerHTML='';
+    $('bagStat').textContent='';
+    return;
+  }
+  $('bagTag').textContent='已定位 · 13 个容器';
+  $('bagTag').className='tag ok';
+  const cursor=(window.ITEM_CAT?Object.keys(ITEM_CAT).length:0);
+  $('bagHint').innerHTML='背包定位在 <span class="mono">0x'+BAG.start.toString(16).toUpperCase()+' ~ 0x'+BAG.end.toString(16).toUpperCase()+
+    '</span>（'+((BAG.end-BAG.start))+' 字节），共 <b>'+BAG.groups.reduce((a,g)=>a+g.items.length,0)+'</b> 件。'+
+    (cursor? ' 物品库已载入 <b>'+cursor+'</b> 条。' :
+      ' <span style="color:var(--wn)">物品库未载入（物品库.js 不在同目录？）——只能按 ID 操作。</span>');
+  const tot=BAG.groups.reduce((a,g)=>a+g.items.length,0);
+  $('bagStat').textContent=(bagDirty?'（已修改 '+tot+' 件中）':'');
+  let html='';
+  BAG.groups.forEach((g,gi)=>{
+    html+='<div class="fld" style="margin-bottom:9px">';
+    const sps=g.items.map(it=>itemSP(it.id)).filter(x=>x!==null);
+    const spSum=sps.reduce((a,b)=>a+b,0);
+    const nz=sps.filter(x=>x>0).length;          // 有正占用值的件数
+    html+='<div class="lb" style="display:flex;justify-content:space-between;align-items:center;gap:8px">'+
+      '<span><b>组 '+gi+' · '+esc(grpLabel(gi))+'</b> <span class="badge mono">0x'+g.off.toString(16).toUpperCase()+'</span> '+
+      '<span class="badge">'+g.items.length+' 件</span>'+
+      (nz? '<span class="badge">占用合计 <b>'+spSum.toLocaleString()+'</b></span>':'')+
+      '</span>'+
+      '<span><button data-badd="'+gi+'">＋ 加入此组</button>'+
+        (g.items.length?' <button data-bmvall="'+gi+'">⇄ 整组移到…</button>':'')+'</span></div>';
+    if(!g.items.length){ html+='<div class="badge" style="display:block;padding:3px 0">（空）</div>'; }
+    else{
+      html+='<table><thead><tr><th style="width:150px">ID</th><th>名称</th>'+
+        (nz?'<th style="width:82px">魂占用</th>':'')+
+        '<th style="width:88px">数量</th><th style="width:150px">操作</th></tr></thead><tbody>';
+      g.items.forEach((it,ii)=>{
+        const info=itemInfo(it.id);
+        const sp=itemSP(it.id);
+        html+='<tr><td class="mono">'+esc(it.id)+'</td>'+
+          '<td>'+(info?esc(info[0]):'<span class="badge">物品库中无此 ID</span>')+
+            (info&&info[5]?' <span class="badge">'+esc(info[5])+'</span>':'')+'</td>'+
+          (nz?'<td class="badge">'+(sp===null?'—':'<b>'+sp+'</b>')+'</td>':'')+
+          '<td><input type="number" min="0" max="999999" value="'+it.qty+'" data-bq="'+gi+':'+ii+'" style="width:78px"></td>'+
+          '<td><button data-bswap="'+gi+':'+ii+'">换成…</button> '+
+              '<button data-bmv="'+gi+':'+ii+'">移到…</button> '+
+              '<button data-bdel="'+gi+':'+ii+'">删除</button></td></tr>';
+      });
+      html+='</tbody></table>';
+    }
+    html+='</div>';
+  });
+  $('bagBox').innerHTML=html;
+}
+$('bagBox').addEventListener('input', e=>{
+  const t=e.target; if(!t.dataset||!t.dataset.bq) return;
+  const [gi,ii]=t.dataset.bq.split(':').map(Number);
+  const v=parseInt(t.value,10); if(!isFinite(v)||v<0) return;
+  if(BAG.groups[gi].items[ii].qty===v) return;
+  BAG.groups[gi].items[ii].qty=v; bagDirty=true;
+  $('bagStat').textContent='（已修改）';
+});
+/* 跨组移动：目标组用数字选，组标签列出来方便对照 */
+function askTargetGroup(cur){
+  let s='目标组号（0-12）：\n';
+  for(let i=0;i<BAG.groups.length;i++) s+='  '+i+' · '+grpLabel(i)+(i===cur?'（当前）':'')+'\n';
+  const v=prompt(s,'8');
+  if(v===null) return -1;
+  const n=parseInt(v,10);
+  if(!isFinite(n)||n<0||n>=BAG.groups.length){ alert('组号无效：'+v); return -1; }
+  if(n===cur){ alert('目标和当前是同一组。'); return -1; }
+  return n;
+}
+function bagMoveOne(gi,ii){
+  const it=BAG.groups[gi].items[ii];
+  const dg=askTargetGroup(gi); if(dg<0) return;
+  const nm=(itemInfo(it.id)||[it.id])[0];
+  BAG.groups[gi].items.splice(ii,1);
+  BAG.groups[dg].items.push(it);
+  bagDirty=true; renderBag();
+  $('msgOut').innerHTML=ok('已移动 '+nm+'（'+it.id+'）：组 '+gi+' → 组 '+dg+' · '+grpLabel(dg)+'\n'+
+    '确认无误后点 ⑦「生成并校验新存档」。');
+}
+function bagMoveGroup(gi){
+  const n=BAG.groups[gi].items.length; if(!n) return;
+  const dg=askTargetGroup(gi); if(dg<0) return;
+  if(!confirm('把「组 '+gi+' · '+grpLabel(gi)+'」的 '+n+' 件全部移到「组 '+dg+' · '+grpLabel(dg)+'」？')) return;
+  const arr=BAG.groups[gi].items.splice(0,n);
+  for(const it of arr) BAG.groups[dg].items.push(it);
+  bagDirty=true; renderBag();
+  $('msgOut').innerHTML=ok('已移动 '+n+' 件：组 '+gi+' → 组 '+dg+' · '+grpLabel(dg)+'\n'+
+    '确认无误后点 ⑦「生成并校验新存档」。');
+}
+
+$('bagBox').addEventListener('click', e=>{
+  const t=e.target; if(t.tagName!=='BUTTON') return;
+  if(t.dataset.badd!==undefined){ openPicker('add', +t.dataset.badd, -1); return; }
+  if(t.dataset.bmvall!==undefined){ bagMoveGroup(+t.dataset.bmvall); return; }
+  if(t.dataset.bmv!==undefined){ const [gi,ii]=t.dataset.bmv.split(':').map(Number); bagMoveOne(gi,ii); return; }
+  if(t.dataset.bswap!==undefined){ const [gi,ii]=t.dataset.bswap.split(':').map(Number); openPicker('swap',gi,ii); return; }
+  if(t.dataset.bdel!==undefined){
+    const [gi,ii]=t.dataset.bdel.split(':').map(Number);
+    const it=BAG.groups[gi].items[ii];
+    const nm=(itemInfo(it.id)||[it.id])[0];
+    if(!confirm('确定删除 '+nm+'（'+it.id+'）？\n删除会改变文件长度。')) return;
+    BAG.groups[gi].items.splice(ii,1); bagDirty=true; renderBag();
+    return;
+  }
+});
+$('btnBagRevert').onclick=()=>{
+  if(!S||!BAG) return;
+  loadBag(S.buf);
+  $('msgOut').innerHTML=ok('已还原背包改动。');
+};
+$('btnBagQty').onclick=()=>{
+  if(!BAG) return;
+  const raw=prompt('把背包里所有物品的数量都设为多少？（1-999999）','99');
+  if(raw===null) return;
+  const v=parseInt(raw,10);
+  if(!isFinite(v)||v<0||v>999999){ alert('数值不合法'); return; }
+  for(const g of BAG.groups) for(const it of g.items) it.qty=v;
+  bagDirty=true; renderBag();
+};
+if($('btnBagAdd')) $('btnBagAdd').onclick=()=>{
+  if(!BAG){ alert('背包未定位，无法添加。'); return; }
+  openPicker('add', -1, -1);
+};
+
+/* ---- 物品选择弹窗 ---- */
+let pickCtx=null, pickRows=[];
+function openPicker(mode, gi, ii){
+  pickCtx={mode, gi, ii};
+  const title=$('pickTitle');
+  if(mode==='add'){
+    title.textContent = gi>=0 ? ('加入物品 → 组 '+gi+'（'+grpLabel(gi)+'）') : '添加物品（自动按类型归组）';
+  }else{
+    const it=BAG.groups[gi].items[ii];
+    title.textContent='替换物品：'+it.id+' → 选择新物品（保持数量 '+it.qty+'）';
+  }
+  // 分类下拉（带条数）
+  $('pickCat').innerHTML=catOptions();
+  $('pickQ').value='';
+  pickRender();
+  $('pickMask').style.display='';
+  setTimeout(()=>$('pickQ').focus(),30);
+}
+function pickRender(){
+  const tb=$('tblPick').querySelector('tbody'); tb.innerHTML='';
+  if(!window.ITEM_CAT){
+    $('pickStat').textContent='物品库未载入：请确认 物品库.js 与修改器在同一个文件夹里';
+    return;
+  }
+  const q=($('pickQ').value||'').trim().toLowerCase();
+  const cat=$('pickCat').value;
+  pickRows=[];
+  for(const id in ITEM_CAT){
+    const v=ITEM_CAT[id];
+    if(!validBagId(id)) continue;                       // 不合格 ID 不进列表
+    if(cat&&cat!=='全部'&&v[1]!==cat) continue;
+    if(q && !(id.toLowerCase().includes(q)||v[0].toLowerCase().includes(q))) continue;
+    pickRows.push([id,v]);
+    if(pickRows.length>=600) break;
+  }
+  $('pickStat').textContent= pickRows.length? ('匹配 '+pickRows.length+' 条'+(pickRows.length>=600?'（只显示前 600）':'')) : '没有匹配';
+  const N=Math.min(pickRows.length,400);
+  for(let k=0;k<N;k++){
+    const [id,v]=pickRows[k];
+    const tr=document.createElement('tr');
+    const sp=itemSP(id);
+    tr.innerHTML='<td class="mono">'+esc(id)+'</td><td>'+esc(v[0])+'</td><td>'+esc(v[1])+'</td>'+
+      '<td class="badge">'+(sp===null?'—':'<b>'+sp+'</b>')+'</td>'+
+      '<td class="badge">'+itemPriceText(id)+'</td>'+
+      '<td class="badge">'+esc(grpLabel(v[2]))+'</td><td class="badge">'+esc(v[3]||'')+'</td>';
+    tr.onclick=()=>pickChoose(id);
+    tb.appendChild(tr);
+  }
+}
+$('pickQ').addEventListener('input',pickRender);
+$('pickCat').addEventListener('change',pickRender);
+$('pickClose').onclick=()=>{ $('pickMask').style.display='none'; };
+$('pickMask').addEventListener('click', e=>{ if(e.target===$('pickMask')) $('pickMask').style.display='none'; });
+function pickChoose(id){
+  const info=itemInfo(id);
+  if(!validBagId(id)){ alert('这个 ID（'+id+'）不符合背包条目格式，写进去会让存档读不出来，已拒绝。'); return; }
+  if(pickCtx.mode==='add'){
+    let gi=pickCtx.gi;
+    if(gi<0) gi = info? info[2] : 12;
+    if(gi<0||gi>=BAG.groups.length) gi=12;
+    BAG.groups[gi].items.push({id:id, qty:1, f2:0, f3:0, off:-1});
+    bagDirty=true;
+    $('pickMask').style.display='none';
+    renderBag();
+    $('msgOut').innerHTML=ok('已加入 '+((info&&info[0])||id)+'（'+id+'）→ 组 '+gi+' · '+grpLabel(gi)+'\n'+
+      '数量默认 1，可在列表里改。确认无误后点 ⑦「生成并校验新存档」。');
+  }else{
+    const {gi,ii}=pickCtx;
+    BAG.groups[gi].items[ii].id=id;
+    bagDirty=true;
+    $('pickMask').style.display='none';
+    renderBag();
+  }
+}
+
+/* ---- 批量添加（按类型） ---- */
+let batchRows=[], batchSel=new Set();
+const BATCH_MAX_ROWS=300;
+
+function bagOwnedIds(){
+  const s=new Set();
+  if(BAG) for(const g of BAG.groups) for(const it of g.items) s.add(it.id);
+  return s;
+}
+function batchSelCount(){
+  let n=0; for(const id of batchRows) if(batchSel.has(id)) n++;
+  return n;
+}
+function openBatch(){
+  if(!BAG){ alert('背包未定位，无法添加。'); return; }
+  if(!window.ITEM_CAT){ alert('物品库未载入（物品库.js 需与修改器放在同一文件夹），批量添加不可用。'); return; }
+  $('batchCat').innerHTML=catOptions();
+  // 等级区间（0-3，物品库里出现过的等级）
+  const lvs=new Set();
+  for(const k in ITEM_CAT){ const n=parseInt(ITEM_CAT[k][3],10); if(isFinite(n)) lvs.add(n); }
+  const lvList=[...lvs].sort((a,b)=>a-b);
+  const optLo='<option value="">等级下限(不限)</option>'+lvList.map(n=>'<option value="'+n+'">等级 ≥ '+n+'</option>').join('');
+  const optHi='<option value="">等级上限(不限)</option>'+lvList.map(n=>'<option value="'+n+'">等级 ≤ '+n+'</option>').join('');
+  $('batchLvLo').innerHTML=optLo;
+  $('batchLvHi').innerHTML=optHi;
+  // 魂占用区间
+  const sps=spValues();
+  $('batchSpLo').innerHTML='<option value="">占用不限</option>'+
+    sps.map(n=>'<option value="'+n+'">占用 ≥ '+n+'</option>').join('');
+  $('batchSpHi').innerHTML='<option value="">占用不限</option>'+
+    sps.map(n=>'<option value="'+n+'">占用 ≤ '+n+'</option>').join('');
+  let gf='<option value="">推荐组（不限）</option>';
+  for(let i=0;i<BAG.groups.length;i++)
+    gf+='<option value="'+i+'">推荐组 '+i+' · '+esc(grpLabel(i))+'</option>';
+  $('batchGrpF').innerHTML=gf;
+  let gs='<option value="-1">自动（按物品类型归组）</option>';
+  for(let i=0;i<BAG.groups.length;i++)
+    gs+='<option value="'+i+'">组 '+i+' · '+esc(grpLabel(i))+'</option>';
+  $('batchGrp').innerHTML=gs;
+  batchSel.clear();
+  batchFilter();
+  $('batchMask').style.display='';
+}
+function batchFilter(){
+  const cat=$('batchCat').value;
+  const lo=$('batchLvLo').value, hi=$('batchLvHi').value;
+  const slo=$('batchSpLo').value, shi=$('batchSpHi').value;
+  const vlo=($('batchVlLo').value||'').trim(), vhi=($('batchVlHi').value||'').trim();
+  const gf=$('batchGrpF').value;
+  const q=($('batchQ').value||'').trim().toLowerCase();
+  batchRows=[];
+  for(const id in ITEM_CAT){
+    const v=ITEM_CAT[id];
+    if(!validBagId(id)) continue;                       // 不合格 ID 不进列表
+    if(cat && cat!=='全部' && v[1]!==cat) continue;
+    if(gf!=='' && String(v[2])!==gf) continue;          // 推荐组筛选
+    if(lo!=='' || hi!==''){
+      const n=parseInt(v[3],10);
+      if(!isFinite(n)) continue;                       // 没写等级的物品，只有「不限」时才显示
+      if(lo!=='' && n<parseInt(lo,10)) continue;
+      if(hi!=='' && n>parseInt(hi,10)) continue;
+    }
+    if(slo!=='' || shi!==''){
+      const sp=itemSP(id);
+      if(sp===null) continue;                          // 没有占用值的（装备/道具等）在启用占用筛选时排除
+      if(slo!=='' && sp<parseInt(slo,10)) continue;
+      if(shi!=='' && sp>parseInt(shi,10)) continue;
+    }
+    if(vlo!=='' || vhi!==''){
+      const pr=itemPrice(id);
+      if(pr===null) continue;                          // 没标价的在启用价值筛选时排除
+      if(vlo!=='' && pr<parseInt(vlo,10)) continue;
+      if(vhi!=='' && pr>parseInt(vhi,10)) continue;
+    }
+    if(q && !(id.toLowerCase().includes(q)||v[0].toLowerCase().includes(q))) continue;
+    batchRows.push(id);
+  }
+  batchRender();
+}
+function batchRender(){
+  const own=bagOwnedIds();
+  const tb=$('tblBatch').querySelector('tbody'); tb.innerHTML='';
+  const N=Math.min(batchRows.length, BATCH_MAX_ROWS);
+  const frag=document.createDocumentFragment();
+  for(let k=0;k<N;k++){
+    const id=batchRows[k], v=ITEM_CAT[id];
+    const o=own.has(id);
+    const tr=document.createElement('tr');
+    const sp=itemSP(id);
+    tr.innerHTML='<td><input type="checkbox" data-bid="'+esc(id)+'"'+(batchSel.has(id)?' checked':'')+'></td>'+
+      '<td class="mono">'+esc(id)+'</td><td>'+esc(v[0])+'</td><td>'+esc(v[1])+'</td>'+
+      '<td class="badge">'+esc(v[3]||'')+'</td>'+
+      '<td class="badge">'+(sp===null?'—':'<b>'+sp+'</b>')+'</td>'+
+      '<td class="badge">'+itemPriceText(id)+'</td>'+
+      '<td class="badge">'+esc(grpLabel(v[2]))+'</td>'+
+      '<td class="badge">'+(o?'已有':'')+'</td>';
+    frag.appendChild(tr);
+  }
+  tb.appendChild(frag);
+  $('batchStat').textContent='匹配 '+batchRows.length+' 条，已勾选 '+batchSelCount()+' 条'+
+    (batchRows.length>N?('（表格只显示前 '+N+' 条，「全选」对全部匹配项生效）'):'');
+}
+$('batchCat').addEventListener('change',batchFilter);
+$('batchGrpF').addEventListener('change',batchFilter);
+$('batchLvLo').addEventListener('change',batchFilter);
+$('batchLvHi').addEventListener('change',batchFilter);
+$('batchSpLo').addEventListener('change',batchFilter);
+$('batchSpHi').addEventListener('change',batchFilter);
+$('batchVlLo').addEventListener('input',batchFilter);
+$('batchVlHi').addEventListener('input',batchFilter);
+$('batchQ').addEventListener('input',batchFilter);
+$('tblBatch').addEventListener('change', e=>{
+  const t=e.target;
+  if(t.type!=='checkbox'||!t.dataset||t.dataset.bid===undefined) return;
+  if(t.checked) batchSel.add(t.dataset.bid); else batchSel.delete(t.dataset.bid);
+  $('batchStat').textContent='匹配 '+batchRows.length+' 条，已勾选 '+batchSelCount()+' 条';
+});
+$('batchAll').onclick=()=>{ batchRows.forEach(id=>batchSel.add(id)); batchRender(); };
+$('batchNone').onclick=()=>{ batchSel.clear(); batchRender(); };
+$('batchInv').onclick=()=>{
+  batchRows.forEach(id=>{ if(batchSel.has(id)) batchSel.delete(id); else batchSel.add(id); });
+  batchRender();
+};
+$('batchUnowned').onclick=()=>{
+  const own=bagOwnedIds();
+  batchSel.clear();
+  batchRows.forEach(id=>{ if(!own.has(id)) batchSel.add(id); });
+  batchRender();
+};
+$('batchClose').onclick=()=>{ $('batchMask').style.display='none'; };
+$('batchMask').addEventListener('click', e=>{ if(e.target===$('batchMask')) $('batchMask').style.display='none'; });
+if($('btnBagBatch')) $('btnBagBatch').onclick=openBatch;
+
+$('batchAdd').onclick=()=>{
+  if(!BAG) return;
+  const own=bagOwnedIds();
+  const giRaw=parseInt($('batchGrp').value,10);
+  const num=Math.max(1,Math.min(999, parseInt($('batchNum').value,10)||1));
+  const todo=[]; let badId=0;
+  for(const id of batchRows){
+    if(!batchSel.has(id)) continue;
+    if(!validBagId(id)){ badId++; continue; }        // 兜底：不合格 ID 一律不写
+    if(own.has(id)) continue;
+    let g=(giRaw>=0)?giRaw:(ITEM_CAT[id][2]|0);
+    if(!(g>=0&&g<BAG.groups.length)) g=12;
+    todo.push({id,g});
+  }
+  const skipped=batchSelCount()-todo.length-badId;
+  if(!todo.length){ alert('没有可添加的条目（可能都已拥有、或一条都没勾选）。'); return; }
+  const bytes=todo.reduce((a,x)=>a+1+x.id.length+10,0);
+  if(!confirm('将要新增 '+todo.length+' 件物品（跳过已拥有 '+skipped+' 件）。\n'+
+      '文件会增大约 '+Math.round(bytes/1024)+' KB。\n\n'+
+      '提示：一次加太多游戏未必认，建议先小批量试一次。要继续吗？')) return;
+  for(const x of todo){ BAG.groups[x.g].items.push({id:x.id, qty:num, f2:0, f3:0, off:-1}); own.add(x.id); }
+  bagDirty=true;
+  $('batchMask').style.display='none';
+  renderBag();
+  $('msgOut').innerHTML=ok('批量添加完成：新增 '+todo.length+' 件，跳过已拥有 '+skipped+' 件'+(badId?('，忽略格式不合格 '+badId+' 件'):'')+'。\n'+
+    '数量统一为 '+num+'，可在 ④ 背包面板里逐个改。确认无误后点 ⑦「生成并校验新存档」。');
+};
+
+/* ============ 物品 / 数值 搜索 ============ */
+const TE=new TextEncoder();
+$('btnFind').onclick=()=>{
+  if(!S) return;
+  const kind=$('findKind').value;
+  if(kind==='id') doFindId(); else doFindNum();
+};
+$('findVal').addEventListener('keydown', e=>{ if(e.key==='Enter') $('btnFind').click(); });
+$('findKind').onchange=()=>{
+  const id=$('findKind').value==='id';
+  $('findType').style.display = id ? 'none' : '';
+  $('findVal').placeholder = id ? '物品ID如 WP10001 / SJ1000101' : '数值，例如 12345';
+};
+
+function doFindId(){
+  const q=($('findVal').value||'').trim();
+  if(!q){ alert('先填一个物品 / ID'); return; }
+  const b=S.buf, enc=TE.encode(q);
+  let hits=[];
+  for(let p=0;p+1+enc.length<=b.length;p++){
+    if(b[p]!==enc.length) continue;
+    let ok=true;
+    for(let k=0;k<enc.length;k++) if(b[p+1+k]!==enc[k]){ ok=false; break; }
+    if(ok) hits.push(p);
+  }
+  let prefix=false;
+  if(!hits.length && q.length>=2){
+    prefix=true;
+    for(let p=0;p+1+enc.length<=b.length;p++){
+      const L=b[p];
+      if(L<enc.length||L>40||p+1+L>b.length) continue;
+      let ok=true;
+      for(let k=0;k<enc.length;k++) if(b[p+1+k]!==enc[k]){ ok=false; break; }
+      if(!ok) continue;
+      try{
+        const s=TDF.decode(b.subarray(p+1,p+1+L));
+        if(/^[A-Za-z0-9_\-]+$/.test(s)) hits.push(p);
+      }catch(e){}
+    }
+  }
+  renderFindRows(hits.map(p=>({
+    off:p, kind:'id',
+    label: (()=>{ try{ return TDF.decode(b.subarray(p+1,p+1+b[p])); }catch(e){ return '?'; } })(),
+    idLen: b[p], value: i32(b,p+1+b[p])
+  })), q + (prefix?'（前缀匹配）':''));
+}
+
+function doFindNum(){
+  const raw=($('findVal').value||'').trim();
+  if(raw===''){ alert('先填一个数字'); return; }
+  const t=$('findType').value, b=S.buf, n=b.length;
+  const hits=[];
+  if(t==='i32'){
+    const v=parseInt(raw,10);
+    for(let p=0;p+4<=n;p++) if(i32(b,p)===v) hits.push(p);
+  }else if(t==='i16'){
+    const v=parseInt(raw,10);
+    for(let p=0;p+2<=n;p++) if(i16(b,p)===v) hits.push(p);
+  }else{
+    const v=parseFloat(raw);
+    const dv=new DataView(b.buffer,b.byteOffset,b.byteLength);
+    for(let p=0;p+4<=n;p++) if(dv.getFloat32(p,true)===v) hits.push(p);
+  }
+  renderFindRows(hits.map(p=>({off:p, kind:'num', label:raw, value:0, numType:t})), raw);
+}
+
+function renderFindRows(rows, title){
+  const tb=$('tblFind').querySelector('tbody'); tb.innerHTML='';
+  $('findStat').textContent=title+'：命中 '+rows.length+' 处'+(rows.length>300?'（只显示前 300）':'');
+  rows.slice(0,300).forEach(r=>{
+    const tr=document.createElement('tr');
+    const cur = r.kind==='id' ? r.value : (r.numType==='f32'? +f32(S.buf,r.off).toFixed(4)
+              : (r.numType==='i16'? i16(S.buf,r.off) : i32(S.buf,r.off)));
+    tr.innerHTML=`<td class="mono">0x${r.off.toString(16).toUpperCase()}</td>
+      <td class="mono">${esc(r.label)}${r.kind==='id'?'<br><span class="badge">ID 后数值 = '+cur+'</span>':''}</td>
+      <td class="mono badge">${esc(contextStr(r.off))}</td>
+      <td><input type="number" id="fv${r.off}" value="${r.kind==='id'?cur:''}" style="width:96px"></td>
+      <td>${r.kind==='id'?`<input type="text" id="fi${r.off}" placeholder="等长新ID" style="width:118px">`:'<span class="badge">—</span>'}</td>
+      <td><button data-o="${r.off}">写入</button></td>`;
+    tb.appendChild(tr);
+    tr.querySelector('button').onclick=()=>{
+      const nv=$('fv'+r.off).value;
+      let did=false;
+      if(nv!==''){
+        const x=r.kind==='id'?parseInt(nv,10):parseInt(nv,10);
+        if(!isFinite(x)){ alert('数值不合法'); return; }
+        if(r.kind==='id'){
+          const off=r.off+1+r.idLen;
+          edits['raw:'+off]={off, val:x, type:'i32'};
+          did=true;
+        }else{
+          if(r.numType==='i16'&&(x<-32768||x>32767)){ alert('int16 超范围'); return; }
+          edits['raw:'+r.off]={off:r.off, val:x, type:r.numType};
+          did=true;
+        }
+      }
+      // 等长换 ID
+      const el=$('fi'+r.off);
+      if(el && el.value.trim()){
+        const news=el.value.trim(), nb=TE.encode(news);
+        if(nb.length!==r.idLen){ alert('新 ID 必须与原来字节长度相同（原 '+r.idLen+' 字节，新 '+nb.length+' 字节）'); return; }
+        const so=r.off+1;
+        for(let k=0;k<nb.length;k++) edits['id:'+(so+k)]={off:so+k, val:nb[k], type:'u8'};
+        did=true;
+      }
+      if(!did){ alert('先填要写入的值'); return; }
+      renderHeroList();
+      alert('已记为待写入，最后点⑦的「生成并校验新存档」。');
+    };
+  });
+}
+function contextStr(p){
+  // 往前找最近的字符串，作为语义线索
+  const b=S.buf;
+  const out=[];
+  for(let q=p-1;q>=Math.max(0,p-400);q--){
+    const n=b[q];
+    if(n>=2&&n<=60&&q+1+n<=b.length){
+      try{
+        const v=TD.decode(b.subarray(q+1,q+1+n));
+        if(/^[\u4e00-\u9fa5A-Za-z0-9 _.\-\/]+$/.test(v)&&v.length>=2){
+          out.push('前面:'+v.slice(0,18));
+          if(out.length>=2) break;
+        }
+      }catch(e){}
+    }
+  }
+  for(let q=p;q<Math.min(b.length-2,p+200);q++){
+    const n=b[q];
+    if(n>=2&&n<=60&&q+1+n<=b.length){
+      try{
+        const v=TD.decode(b.subarray(q+1,q+1+n));
+        if(/^[\u4e00-\u9fa5A-Za-z0-9 _.\-\/]+$/.test(v)&&v.length>=2){
+          out.push('后面:'+v.slice(0,18)); break;
+        }
+      }catch(e){}
+    }
+  }
+  return out.join('  ');
+}
+
+/* ============ ⑦ 称号 / 资源数值定位 ============ */
+let TITLE=null;
+const HTC_RE=/^HTC\d{7}$/;
+const LST_ID=/^[A-Za-z]{2,12}[A-Za-z0-9_]{2,20}$/;
+
+/* 找「已装配列表」：[i32 count][len][ID]… 的纯串列表，且其中含 HTC 称号 */
+function findTitleSlots(b){
+  const slots=[];
+  for(let i=0;i+11<b.length;i++){
+    if(b[i]!==10) continue;                       // 称号 ID 固定 10 字节
+    let id=null;
+    try{ id=TDF.decode(b.subarray(i+1,i+11)); }catch(e){ continue; }
+    if(!HTC_RE.test(id)) continue;
+    let q=i, start=i;
+    for(let k=0;k<120;k++){                       // 往回溯出整个列表
+      let st=-1;
+      for(let t=q-1;t>=Math.max(0,q-200);t--){
+        const L=b[t];
+        if(L<3||L>40) continue;
+        if(t+1+L!==q) continue;
+        let s=null; try{ s=TDF.decode(b.subarray(t+1,t+1+L)); }catch(e){ continue; }
+        if(s && LST_ID.test(s)){ st=t; break; }
+      }
+      if(st<0) break;
+      start=st; q=st;
+    }
+    if(start-4<0) continue;
+    const cnt=i32(b,start-4);
+    if(cnt<1||cnt>400) continue;
+    let p=start, items=[], ok=true;
+    for(let k=0;k<cnt;k++){                       // 正序校验整张表
+      const L=b[p];
+      if(L<3||L>40){ ok=false; break; }
+      let s=null; try{ s=TDF.decode(b.subarray(p+1,p+1+L)); }catch(e){ ok=false; break; }
+      if(!LST_ID.test(s)){ ok=false; break; }
+      items.push({off:p, id:s, len:L});
+      p+=1+L;
+    }
+    if(!ok||!items.length) continue;
+    if(!items.some(it=>HTC_RE.test(it.id))) continue;
+    slots.push({countOff:start-4, count:cnt, start, end:p, items});
+  }
+  const seen=new Set(), out=[];
+  for(const s of slots){ if(seen.has(s.start)) continue; seen.add(s.start); out.push(s); }
+  return out;
+}
+function scanTitles(){
+  TITLE=null;
+  if(!S) return;
+  try{ TITLE={slots:findTitleSlots(S.buf)}; }catch(e){ TITLE={slots:[]}; }
+}
+
+/* ============ 装配称号列表 / 资源数值（金钱·策略点·科技点） ============ */
+const TID_RE=/^\d{7}$|^\d{4,}[a-z]{2,}[\da-z]*$/;
+let EQT=null, eqDirty=false, RES=null;
+
+function titleKnown(id){ return !!(window.ITEM_CAT && window.ITEM_CAT['HTC'+id]); }
+/* ---- 装配列表条目识别：混排表里不止称号，还有军魂/智魂/装备等 ---- */
+const LIST_PRE=['HTC','FSoul','DSoul','WarSoul','WarSkill','FCard','DCard'];
+function listEntryInfo(id){                 // 传入存档里的原始 id（一般不带前缀）
+  for(const p of LIST_PRE){                 // 先按类型前缀查（装配列表语境以称号/魂为主）
+    const inf=itemInfo(p+id);
+    if(inf) return {id:p+id, info:inf, pre:p};
+  }
+  if(itemInfo(id)) return {id, info:itemInfo(id), pre:''};   // 无前缀直接命中（装备/物品/宠物等）
+  return null;
+}
+function listEntryName(id){
+  const r=listEntryInfo(id);
+  return r?r.info[0]:('未知条目 '+id);
+}
+function eqTitleName(id){ return listEntryName(id); }   // 兼容旧调用（变更清单等）
+function eqOptions(q){
+  const list=[];
+  if(window.ITEM_CAT) for(const id in ITEM_CAT){
+    if(id.slice(0,3)!=='HTC') continue;
+    const nid=id.slice(3), nm=ITEM_CAT[id][0]||id;
+    if(q && nm.indexOf(q)<0 && nid.indexOf(q)<0 && id.indexOf(q)<0) continue;
+    list.push({id:nid,nm});
+  }
+  list.sort((a,b)=>a.nm.localeCompare(b.nm,'zh'));
+  return list;
+}
+function fillEqSel(q){
+  const sel=$('eqPick'); const list=eqOptions(q);
+  const eq=equippedTitleMap();                        // 已装配的标出来，避免重复加
+  sel.innerHTML = list.length
+    ? list.map(t=>{
+        const on=eq[t.id];
+        return '<option value="'+esc(t.id)+'" title="'+esc(titleTip('HTC'+t.id))+'">'+esc(t.nm)+
+               '（'+esc(t.id)+'）'+(on?' · 已在装配':'')+'</option>';
+      }).join('')
+    : '<option value="">（无匹配）</option>';
+  const cnt=$('eqCnt');
+  if(cnt) cnt.textContent=(q?('筛出 '+list.length+' 个'):('共 '+list.length+' 个'));
+  updTitleDesc('eqPick');
+}
+
+/* 头部金钱：magic4+槽4+[len][串]+i32+[len][串]+i32 → 金钱 i32（后面还跟一个 i32 副值） */
+function locHeaderMoney(b){
+  let p=8;
+  if(p>=b.length) return -1;
+  const l1=b[p]; if(!(l1>=1&&l1<=60)) return -1; p+=1+l1;
+  p+=4;
+  if(p>=b.length) return -1;
+  const l2=b[p]; if(!(l2>=1&&l2<=60)) return -1; p+=1+l2;
+  p+=4;
+  if(p+4>b.length) return -1;
+  return p;
+}
+/* 金钱在文件里有第二副本（玩家资产块）；按值找第二处 */
+function moneySecondCopy(b){
+  const mo=locHeaderMoney(b);
+  if(mo<0) return -1;
+  const v=i32(b,mo);
+  if(!(v>0)) return -1;
+  const b0=v&255,b1=(v>>8)&255,b2=(v>>16)&255,b3=(v>>>24)&255;
+  let seen=0;
+  for(let i=0;i+4<=b.length;i++){
+    if(b[i]===b0&&b[i+1]===b1&&b[i+2]===b2&&b[i+3]===b3&&i32(b,i)===v){
+      seen++; if(seen===2) return i;
+    }
+  }
+  return -1;
+}
+function findMoneyCopies(b){
+  const off=locHeaderMoney(b);
+  if(off<0) return null;
+  const v=i32(b,off), copies=[off];
+  if(v>0&&v<=2000000000){
+    const b0=v&255,b1=(v>>8)&255,b2=(v>>16)&255,b3=(v>>>24)&255;
+    for(let i=off+4;i+4<=b.length&&copies.length<8;i++){
+      if(b[i]===b0&&b[i+1]===b1&&b[i+2]===b2&&b[i+3]===b3&&i32(b,i)===v) copies.push(i);
+    }
+  }
+  return {off,val:v,copies};
+}
+/* 装配称号列表：[i32 N][len][称号id]×N，无 HTC 前缀（7位数字或 MOD 式 id），
+   位于金钱第二副本前 0x2000 窗口内；窗口里第一个即是装配称号，其余大列表是家族称号库 */
+function findEqTitleLists(b,money2){
+  const out=[];
+  const lo=Math.max(0,money2-0x2000);
+  for(let o=lo;o<money2-8;o++){
+    const N=i32(b,o);
+    /* 2026-10-13：玩家会越攒越多称号，实测已经到 55 条；旧代码写死 N<=30，
+       真列表被整条跳过，于是退到了窗口里结构相似的「军技/武魂列表」上 ——
+       面板显示出一堆军技武魂，就是这个原因。上限放宽到 300。 */
+    if(!(N>=1&&N<=300)) continue;
+    let p=o+4; const ids=[]; let ok=true;
+    for(let k=0;k<N;k++){
+      const L=b[p];
+      if(!(L>=5&&L<=16)){ok=false;break;}
+      let s=null; try{s=TDF.decode(b.subarray(p+1,p+1+L));}catch(e){ok=false;break;}
+      if(!TID_RE.test(s)){ok=false;break;}
+      ids.push(s); p+=1+L;
+    }
+    if(!ok) continue;
+    const nt=ids.filter(titleKnown).length;
+    if(!nt) continue;
+    out.push({countOff:o,start:o+4,end:p,ids,nt,ratio:nt/ids.length});
+  }
+  /* 排序：先看「整条几乎都是称号」的（ratio），再看称号条数多的，最后才是地址靠前的。
+     玩家自己的称号表是纯称号列表（ratio=1），而窗口里同样长得像的军技/武魂/阵法列表
+     ratio 很低，这样就不会再被选错。 */
+  out.sort((a,z)=>(z.ratio-a.ratio)||(z.nt-a.nt)||(a.countOff-z.countOff));
+  return out;
+}
+/* 家族块：家族表头 [08]"GI1xxxxx"+中文名；科技点在 JZ 建筑列表后，策略点在其后、家族表头前 */
+function findFamilyHead(b){
+  const n=b.length;
+  for(let i=0;i+14<n;i++){
+    if(b[i]!==8||b[i+1]!==71||b[i+2]!==73||b[i+3]!==49) continue;
+    let ok=true;
+    for(let k=4;k<9;k++){ const c=b[i+k]; if(c<48||c>57){ok=false;break;} }
+    if(!ok) continue;
+    const p=i+9, L=b[p];
+    if(!(L>=4&&L<=30)||p+1+L>n) continue;
+    let nm=null; try{nm=TDF.decode(b.subarray(p+1,p+1+L));}catch(e){continue;}
+    if(/^[\u4e00-\u9fff·]{2,}$/.test(nm)) return i;
+  }
+  return -1;
+}
+/* ---- 势力 / 家族资源（2026-10-09 重写：旧版靠固定距离，成立势力后失效）----
+   结构（家族/势力的资源块）：
+     [count1 i32][count1 × [len]JZxxxxx]        ← 该势力/家族的建筑列表
+     [count2 i32][count2 × ([len]id + i32)]     ← 附属列表（势力状态才有内容）
+     [i32 0]
+     [科技点 i32][策略点 i32]                    ← 在野时策略点为 0（策略点在家族成员列表之后）
+   全文件有多套同构块（每座城也有一套），用打分挑选：
+     有附属列表 +5 / 科技值 > 1万 +3 / 策略点非 0 +1；同分取地址最后的。
+   Save0(势力·科技95403/策略10403) 与 Save2(在野·科技1168/策略555) 两档实测均选中正确块。 */
+function scoreFactionAt(b,p){
+  const n=b.length;
+  const n1=i32(b,p);
+  if(!(n1>=1&&n1<=60)) return null;
+  let q=p+4;
+  for(let k=0;k<n1;k++){
+    if(q+2>n) return null;
+    const L=b[q];
+    if(!(L>=5&&L<=14)) return null;
+    let s='';
+    for(let j=0;j<L;j++){ const c=b[q+1+j]; if(c<33||c>126) return null; s+=String.fromCharCode(c); }
+    if(!/^JZ\d{4,6}(_\d+)?$/.test(s)) return null;
+    q+=1+L;
+  }
+  const e1=q;
+  if(e1+4>n) return null;
+  const n2=i32(b,e1);
+  if(!(n2>=0&&n2<=60)) return null;
+  let e2;
+  if(n2===0) e2=e1+4;
+  else{
+    let r=e1+4;
+    for(let k=0;k<n2;k++){
+      if(r+5>n) return null;
+      const L=b[r];
+      if(!(L>=3&&L<=16)) return null;
+      for(let j=0;j<L;j++){ const c=b[r+1+j]; if(c<33||c>126) return null; }
+      r+=1+L+4;
+    }
+    e2=r;
+  }
+  if(e2+12>n) return null;
+  if(i32(b,e2)!==0) return null;
+  const tech=i32(b,e2+4);
+  if(!(tech>=1&&tech<=90000000)) return null;
+  const strat=i32(b,e2+8);
+  let score=0;
+  if(n2>0) score+=5;               // 势力状态：有附属列表（策略/科技 id 列表）
+  if(tech>10000) score+=3;         // 势力资源通常量级更大
+  /* 注意：不能用「策略点非 0」加分 —— 在野时真值块的策略点是 0，
+     而那会让「每座城都有的同构块」反超（实测 Save2 就是被这条坑了）。 */
+  return {listOff:p,n1,n2,techOff:e2+4,tech,stratOff:e2+8,
+          strat:(strat>0&&strat<=90000000)?strat:0,score};
+}
+/* ---- 2026-10-14 新增：君主 / 成立势力状态下的资源块定位 ----
+   实测结构（Save1 2026-10-14 · 科技 920851 / 策略 990869 / 国库 8402291
+              @0x15BB956 / 0x15BBC66；10-12 档 95403/10403/14751 同构）：
+     [ 若干条 [len 3..5][纯数字][i32] 记录 ]     ← 军魂/技能编号列表
+     [科技点 i32][策略点 i32]                     ← 紧邻（这是最稳的特征）
+     …… 中间若干数据 ……
+     [国库金 i32][count i32][count × 背包式物品条目]   ← 势力仓库物品
+   判据：① 科技/策略都 ≥ 10000（只有成立势力才这么大）；
+        ② 紧邻前面有 ≥3 条军魂编号记录；
+        ③ 后面 0x600 内能找到「国库 + 物品列表」；
+        ④ 多个候选取最靠后的（离国库最近的那个）。
+   ①~④ 在 10-14 / 10-12 两档都唯一命中真值，10-13 档也给出合理值。
+   在野状态没有这套结构，会落到下面的旧逻辑。 */
+function skillRunBefore(b,p){
+  const DIG=/^[0-9]{2,6}$/;
+  for(let pad=4;pad<=16;pad++){
+    let q=p-pad, cnt=0;
+    while(q>8){
+      let found=-1;
+      for(let L=3;L<=5;L++){
+        const o=q-1-L-4;
+        if(o<0) continue;
+        if(b[o]!==L) continue;
+        let s='',ok=true;
+        for(let j=0;j<L;j++){ const c=b[o+1+j]; if(c<48||c>57){ok=false;break;} s+=String.fromCharCode(c); }
+        if(!ok||!DIG.test(s)) continue;
+        const v=i32(b,o+1+L);
+        if(!(v>=0&&v<=999999)) continue;
+        found=o; break;
+      }
+      if(found<0) break;
+      q=found; cnt++;
+      if(cnt>80) break;
+    }
+    if(cnt>=3) return cnt;
+  }
+  return 0;
+}
+function findTreasuryNear(b,lo,hi){
+  for(let t=lo;t<hi;t++){
+    const v=i32(b,t);
+    if(!(v>=10000&&v<=99999999)) continue;
+    for(const cOff of [t+4,t+8]){
+      if(cOff===t+8&&i32(b,t+4)!==0) continue;
+      const n=i32(b,cOff);
+      if(!(n>=1&&n<=500)) continue;
+      let p=cOff+4, ok=true;
+      for(let k=0;k<n;k++){
+        const e=bagEntry(b,p);
+        if(!e||e.id.length<4||!(e.qty>=0&&e.qty<=1000000)){ ok=false; break; }
+        p=e.next;
+      }
+      if(ok) return {off:t,val:v,n};
+    }
+  }
+  return null;
+}
+function findFactionRes(b){
+  /* ① 君主 / 已成立势力：科技+策略紧邻 + 前面军魂列表 + 后面有国库 */
+  const strong=[];
+  for(let p=0x100;p+24<b.length;p++){
+    const a=i32(b,p), c=i32(b,p+4);
+    if(!(a>=10000&&a<=30000000)) continue;
+    if(!(c>=10000&&c<=30000000)) continue;
+    if(skillRunBefore(b,p)<3) continue;
+    const t=findTreasuryNear(b,p+8,Math.min(b.length-24,p+0x600));
+    if(!t) continue;
+    strong.push({listOff:p,techOff:p,tech:a,stratOff:p+4,strat:c,
+                 treasuryOff:t.off,treasury:t.val,score:200,n1:0,n2:0,kind:'faction'});
+  }
+  if(strong.length){
+    strong.sort((a,z)=>z.listOff-a.listOff);        // 取最靠后（离国库最近）
+    const best=strong[0];
+    best.cands=strong.slice();
+    return best;
+  }
+  const cands=[];
+  const from=Math.max(0,Math.floor(b.length*0.5));
+  for(let p=from;p+32<b.length;p++){
+    if(b[p]<1||b[p]>60) continue;                 // 快速预筛：count1 低字节
+    const c=scoreFactionAt(b,p);
+    if(c) cands.push(c);
+  }
+  if(!cands.length) return null;
+  /* 每个候选都试着找「国库资金」和「家族策略点」，它们只存在于玩家自己那一块：
+       · 已成立势力 → 块内能定位到国库（Save0: 0x1584127 → 国库 14751）
+       · 还在野     → 块内策略点为 0，但能在家族成员列表后找到策略点（Save2: → 555）
+     实测：两档里都**只有**正确的那个候选满足，所以用它来锁定。 */
+  for(const c of cands){
+    const t=findTreasury(b,c.techOff);
+    if(t){ c.treasuryOff=t.off; c.treasury=t.val; }
+    if(!c.strat){
+      const s=findFamilyStrategy(b,c.techOff);
+      if(s){ c.stratOff=s.off; c.strat=s.val; c.famStrat=true; }
+    }
+  }
+  const byScore=pool=>pool.sort((a,z)=>(z.score-a.score)||(z.listOff-a.listOff));
+  /* ① 势力状态：块里有附属列表 **且** 能定位到国库 —— 只有玩家自己的势力满足；
+     ② 在野：块里策略点为 0 但能在家族成员列表后找到策略点；
+     ③ 兜底：按打分排序（score 高者优先，同分取地址最后）。 */
+  let pool=cands.filter(c=>c.treasury&&c.n2>0);
+  if(!pool.length) pool=cands.filter(c=>c.famStrat&&c.n2===0);
+  if(!pool.length) pool=cands;
+  byScore(pool);
+  const best=pool[0];
+  best.cands=byScore(cands.slice()).slice(0,8);
+  return best;
+}
+/* 在野状态：家族成员列表（连续 WJ 条目）之后、前后被 0 包夹的那个值 = 策略点 */
+function findFamilyStrategy(b,techOff){
+  const end=Math.min(b.length-20, techOff+0x4000);
+  let best=null;
+  for(let o=techOff+8;o<end;o++){
+    const v=i32(b,o);
+    if(!(v>=1&&v<=90000000)) continue;
+    if(i32(b,o-4)!==0) continue;
+    let z=true;
+    for(let k=o+4;k<o+20;k++) if(b[k]!==0){z=false;break;}
+    if(!z) continue;
+    let hasWJ=false;                                // 前面 0x100 内要有成员列表尾巴
+    for(let k=Math.max(0,o-0x100);k<o-1;k++){
+      if(b[k]>=6&&b[k]<=12&&b[k+1]===0x57&&b[k+2]===0x4a){ hasWJ=true; break; }
+    }
+    if(!hasWJ) continue;
+    best={off:o,val:v};                             // 取最靠后的一个
+  }
+  return best;
+}
+/* 国库资金：势力块里、科技点之后，前后被大段 0 包夹、且后面紧跟一个 ID 列表的那个值 */
+function findTreasury(b,techOff){
+  const end=Math.min(b.length-24, techOff+0x800);
+  for(let o=techOff+8;o<end;o++){
+    const v=i32(b,o);
+    if(!(v>=1&&v<=90000000)) continue;
+    let z=true;
+    for(let k=o-0x40;k<o;k++) if(b[k]!==0){z=false;break;}
+    if(!z) continue;
+    const nn=i32(b,o+8);
+    if(!(nn>=1&&nn<=200)) continue;
+    const L=b[o+12];
+    if(!(L>=5&&L<=16)) continue;
+    let s='';
+    for(let j=0;j<L;j++){ const c=b[o+13+j]; if(c<33||c>126){z=false;break;} s+=String.fromCharCode(c); }
+    if(!z||!/^[A-Za-z]{1,5}[0-9]{3,}/.test(s)) continue;
+    return {off:o,val:v};
+  }
+  return null;
+}
+/* ================= ⑧ 城市属性 =================
+   存档里每座城有一条运行时记录：
+     [资金 i32][军粮 i32][人口 i32][治安 f32][N i32][ N × ([len]id + i32 值) ]
+   记录后面紧跟 [06]CSxxxx（城市 id）。列表最后一条若是玩家(NWJ0)，其「值」字段即民心。
+   2026-10-09 用 Save3 邪马台真值（资金960225/军粮99999/人口67217/治安992/民心980）验证。 */
+let CITY=null;
+const CITY_ID_RE=/^[A-Za-z]{1,5}[0-9]{1,9}[0-9A-Za-z_]{0,7}$/;
+
+function parseCityList(b,p0,N){
+  let p=p0; const items=[];
+  for(let k=0;k<N;k++){
+    if(p+5>=b.length) return null;
+    const L=b[p];
+    if(!(L>=3&&L<=16)) return null;
+    let s='';
+    for(let j=0;j<L;j++){ const c=b[p+1+j]; if(c<33||c>126) return null; s+=String.fromCharCode(c); }
+    if(!CITY_ID_RE.test(s)) return null;
+    const vo=p+1+L;
+    items.push({id:s,valOff:vo,val:i32(b,vo)});
+    p=vo+4;
+  }
+  return {end:p,items};
+}
+/* ============================================================
+   ⑨ 宠物（玩家宠物列表）
+   结构：[i32 count]  count × ( [6×00] + [len]id + [len]编号 + [len]名字 + [len]空 + [len]族
+          + 4 字节对齐字段区(+0x00 等级上限 / +0x04 月饲养费 / +0x08 价值 / +0x0c ?
+          / +0x10 攻击 / +0x14 防御 / +0x18 速度 / +0x1c 生命 / +0x20 真气 …)
+          + 魂/技列表 + 多语言名块(简中·英文·繁中·韩文) + 尾部 0 填充 )
+   实测 Save1（2026-10-11 15:18）：玩家 6 只，count @0x15A14AD，首条 @0x15A14B1。
+   ============================================================ */
+let PETS=null;
+const PET_LEAD=6;
+function petStr(b,p){
+  if(p>=b.length) return null;
+  const L=b[p];
+  if(L>0x80) return null;
+  try{ return {s:TDF.decode(b.subarray(p+1,p+1+L)),next:p+1+L}; }catch(e){ return null; }
+}
+function parsePetRec(b,p){
+  if(p+4>b.length) return null;
+  const L0=b[p];
+  if(L0<3||L0>16) return null;
+  if(b[p+1]!==80) return null;                       // 'P'
+  let id; try{ id=TDF.decode(b.subarray(p+1,p+1+L0)); }catch(e){ return null; }
+  if(!/^P[0-9A-Za-z_]{2,15}$/.test(id)) return null;  // 主表 P1001605、MOD P10001ouia1 都认
+  let q=p+1+L0;
+  const a=petStr(b,q);  if(!a||!/^\d{1,6}$/.test(a.s)) return null; q=a.next;
+  const nm=petStr(b,q); if(!nm) return null; q=nm.next;
+  const e=petStr(b,q);  if(!e) return null;  q=e.next;
+  const fa=petStr(b,q); if(!fa) return null; q=fa.next;
+  const v=[]; for(let k=0;k<8;k++) v.push(i32(b,q+k*4));
+  if(!(v[0]>=1&&v[0]<=100)) return null;
+  if(!(v[1]>=0&&v[1]<=100000)) return null;
+  if(!(v[2]>=0&&v[2]<=10000000)) return null;
+  if(!(v[4]>=0&&v[4]<=3000&&v[5]>=0&&v[5]<=3000&&v[6]>=0&&v[6]<=3000)) return null;
+  if(!(v[7]>=0&&v[7]<=5000000)) return null;
+  return {id,num:a.s,name:nm.s,fam:fa.s,off:p,fieldOff:q,idLen:L0,
+          lvLimit:v[0],monthCost:v[1],value:v[2],
+          atk:v[4],dfn:v[5],spd:v[6],hp:v[7]};
+}
+function petNextOff(b,q){
+  const lim=Math.min(b.length-9,q+0x400);
+  for(let d=8;q+d<lim;d++){
+    if(b[q+d+1]!==80) continue;                      // 'P'
+    const L=b[q+d];
+    if(L<3||L>16) continue;
+    let z=true;
+    for(let k=1;k<=PET_LEAD;k++) if(b[q+d-k]!==0){z=false;break;}
+    if(!z) continue;
+    if(!parsePetRec(b,q+d)) continue;
+    return q+d;
+  }
+  return -1;
+}
+function petRecEnd(b,off){
+  const lim=Math.min(b.length-8,off+0x600);
+  let i=off+8;
+  while(i<lim){
+    if(b[i]===0){
+      let j=i; while(j<lim&&b[j]===0) j++;
+      if(j-i>=PET_LEAD){
+        let ok=false;
+        if(b[j+1]===80&&parsePetRec(b,j)) ok=true;
+        if(!ok&&j+7<=b.length&&b[j+4]===6&&b[j+5]===67&&b[j+6]===83){
+          const n=i32(b,j); if(n>=10&&n<=2000) ok=true;
+        }
+        if(ok) return i;
+      }
+      i=j;
+    } else i++;
+  }
+  return -1;
+}
+function findPetList(b){
+  let best=null;
+  for(let p=0;p+9<b.length;p++){
+    if(b[p+1]!==80) continue;                        // 'P'
+    if(!parsePetRec(b,p)) continue;
+    let count=i32(b,p-4), co=p-4;
+    if(!(count>=1&&count<=30)){ count=i32(b,p-5); co=p-5; }
+    if(!(count>=1&&count<=30)) continue;
+    const recs=[]; let q=p, ok=true;
+    for(let k=0;k<count;k++){
+      const rr=parsePetRec(b,q);
+      if(!rr){ ok=false; break; }
+      recs.push(rr);
+      if(k===count-1) break;
+      const nxt=petNextOff(b,q);
+      if(nxt<0){ ok=false; break; }
+      q=nxt;
+    }
+    if(!ok||recs.length!==count) continue;
+    const cand={count,countOff:co,listStart:p,recs,listEnd:q};
+    if(!best||count>best.count) best=cand;
+  }
+  return best;
+}
+function scanPets(){
+  PETS=null;
+  if(!S) return;
+  try{
+    const r=findPetList(S.buf);
+    if(!r) return;
+    PETS={count:r.count,countOff:r.countOff,listStart:r.listStart,
+          recs:r.recs.map(x=>Object.assign({},x)),sel:-1,add:[]};
+  }catch(e){ PETS=null; }
+}
+/* 记录尾部「多语言名块」= [简中][英文][繁中][韩文] 四段，紧挨在尾部 0 填充之前。
+   从 end 往前扫，要求 4 段且正好抵到 end、第 1/3 段含中文、第 2 段是 ASCII。 */
+function petLangStart(b,from,end){
+  const isHan=s=>/[\u3400-\u9fff]/.test(s);
+  const isAscii=s=>s.length>0&&/^[\x20-\x7e]+$/.test(s);
+  for(let p=end-1;p>from;p--){
+    let q=p, ss=[], ok=true;
+    while(q<end&&ss.length<4){
+      const L=b[q];
+      if(L>0x60||q+1+L>end){ ok=false; break; }
+      let t; try{ t=TDF.decode(b.subarray(q+1,q+1+L)); }catch(e){ ok=false; break; }
+      ss.push(t); q+=1+L;
+    }
+    if(ok&&q===end&&ss.length===4&&isHan(ss[0])&&isAscii(ss[1])&&isHan(ss[2])) return p;
+  }
+  return -1;
+}
+/* 宠物品种清单（物品库的 PET_CAT：主表 + MODs + MODProjects） */
+function petOptions(){
+  const list=[];
+  if(window.PET_CAT) for(const id in PET_CAT){
+    const v=PET_CAT[id];
+    list.push({id,nm:v[0]||id,en:v[1]||'',tc:v[2]||'',kr:v[3]||'',icon:v[4]||'',
+               lv:v[6]||'',cost:v[7]||'',val:v[8]||'',
+               atk:v[9]|0,dfn:v[10]|0,spd:v[11]|0,hp:v[12]|0,mod:!!v[13]});
+  }
+  list.sort((a,z)=>(a.mod?1:0)-(z.mod?1:0)||a.nm.localeCompare(z.nm,'zh'));
+  return list;
+}
+function petOwnedMap(){
+  const m={};
+  if(PETS) PETS.recs.forEach(r=>{ m[r.id]=(m[r.id]||0)+1; });
+  return m;
+}
+/* 编号段紧跟 id 段：[6 个 0][len]id[len]编号… —— 直接按偏移定位，不靠字符串搜索 */
+function setPetNumAt(unit,idLen,oldNum,newNum){
+  const pos=PET_LEAD+1+idLen;
+  if(unit[pos]!==oldNum.length) throw new Error('宠物编号字段位置异常（模板格式不符）');
+  for(let k=0;k<oldNum.length;k++)
+    if(unit[pos+1+k]!==oldNum.charCodeAt(k)) throw new Error('宠物编号字段内容不匹配');
+  unit[pos]=newNum.length;
+  for(let k=0;k<newNum.length;k++) unit[pos+1+k]=newNum.charCodeAt(k);
+}
+/* 同品种：整条复制 */
+function copyPetUnit(b,t,newNum){
+  const ue=petRecEnd(b,t.off);
+  if(ue<0) throw new Error('模板宠物记录边界未找到');
+  const unit=new Uint8Array(PET_LEAD+(ue-t.off));
+  unit.set(b.subarray(t.off,ue),PET_LEAD);
+  setPetNumAt(unit,t.id.length,t.num,newNum);
+  return unit;
+}
+/* 换品种：用物品库的品种数据重建「头 5 段 + 字段区数值 + 多语言名块」，中间部分照抄模板 */
+function makePetUnit(b,t,tgtId,newNum){
+  const ue=petRecEnd(b,t.off);
+  if(ue<0) throw new Error('模板宠物记录边界未找到');
+  const ls=petLangStart(b,t.fieldOff,ue);
+  if(ls<0) throw new Error('没能定位模板宠物的多语言名块，无法改品种');
+  const info=(window.PET_CAT||{})[tgtId];
+  if(!info) throw new Error('物品库里没有品种 '+tgtId+'，请先跑一次「更新物品库」');
+  const put=(arr,str)=>{
+    const e=TE.encode(String(str==null?'':str));
+    arr.push(e.length); for(let i=0;i<e.length;i++) arr.push(e[i]);
+  };
+  const head=[];
+  put(head,tgtId); put(head,newNum); put(head,info[0]||t.name); put(head,''); put(head,info[4]||t.fam);
+  const mid=new Uint8Array(b.subarray(t.fieldOff,ls));
+  const dv=new DataView(mid.buffer,mid.byteOffset,mid.byteLength);
+  const setI=(off,v)=>{ if(off+4<=mid.length) dv.setInt32(off,Math.max(0,Math.round(v)||0),true); };
+  setI(0x00, parseInt(info[6],10)||t.lvLimit);
+  setI(0x04, parseInt(info[7],10)||t.monthCost);
+  setI(0x08, parseInt(info[8],10)||t.value);
+  setI(0x10, info[9]|0); setI(0x14, info[10]|0); setI(0x18, info[11]|0); setI(0x1c, info[12]|0);
+  const lang=[];
+  put(lang, info[0]||t.name);
+  put(lang, info[1]||info[0]||t.name);
+  put(lang, info[2]||info[0]||t.name);
+  put(lang, info[3]||info[0]||t.name);
+  const body=new Uint8Array(head.length+mid.length+lang.length);
+  let o=0;
+  body.set(head,o); o+=head.length;
+  body.set(mid,o);  o+=mid.length;
+  body.set(lang,o);
+  const unit=new Uint8Array(PET_LEAD+body.length);
+  unit.set(body,PET_LEAD);
+  return unit;
+}
+function petFieldSpec(p,key){
+  if(!p) return null;
+  const base=p.fieldOff;
+  if(key==='atk') return {off:base+0x10,label:'攻击力'};
+  if(key==='dfn') return {off:base+0x14,label:'防御力'};
+  if(key==='spd') return {off:base+0x18,label:'速度'};
+  if(key==='hp')  return {off:base+0x1c,label:'生命值'};
+  return null;
+}
+function renderPets(){
+  const card=$('cardPet'); if(!card) return;
+  if(!S){ card.style.display='none'; return; }
+  card.style.display='';
+  const tb=$('tblPet').querySelector('tbody');
+  if(!PETS){
+    $('petTag').textContent='未定位'; $('petTag').className='tag wn';
+    tb.innerHTML='<tr><td colspan="8" class="badge">这份存档里没找到宠物列表</td></tr>';
+    $('petHint').textContent='';
+    $('petFields').innerHTML='<span class="badge">未定位到宠物</span>';
+    return;
+  }
+  $('petTag').textContent=PETS.recs.length+' 只'; $('petTag').className='tag ok';
+  tb.innerHTML='';
+  PETS.recs.forEach((p,i)=>{
+    const tr=document.createElement('tr');
+    if(i===PETS.sel) tr.className='sel';
+    tr.innerHTML='<td class="mono">'+esc(p.id)+'</td><td><b>'+esc(p.name)+'</b></td>'+
+      '<td class="mono">'+esc(p.num)+'</td>'+
+      '<td class="mono">'+p.atk+'</td><td class="mono">'+p.dfn+'</td>'+
+      '<td class="mono">'+p.spd+'</td><td class="mono">'+p.hp+'</td>'+
+      '<td>'+(i===PETS.sel?'<span class="badge ok">已选</span>':'')+'</td>';
+    tr.onclick=()=>{ PETS.sel=i; renderPets(); };
+    tb.appendChild(tr);
+  });
+  $('petHint').innerHTML='列表数量 @0x'+PETS.countOff.toString(16).toUpperCase()+
+    ' · 首条记录 @0x'+PETS.listStart.toString(16).toUpperCase()+
+    ' · 记录里的等级 / 经验 / 星级等字段还没定位（需要一次「游戏里有变化前后各存一档」的对比）。';
+
+  const box=$('petFields');
+  const p=(PETS.sel>=0)?PETS.recs[PETS.sel]:null;
+  if(!p){ box.innerHTML='<span class="badge">点左边表格里的宠物</span>'; }
+  else{
+    const KEYS=[['atk','攻击力'],['dfn','防御力'],['spd','速度'],['hp','生命值']];
+    let h='<div class="badge" style="margin-bottom:6px">'+esc(p.name)+
+          ' <span class="mono">'+esc(p.id)+'</span> · 编号 '+esc(p.num)+'</div>';
+    KEYS.forEach(([k,lab])=>{
+      const sp=petFieldSpec(p,k); if(!sp) return;
+      const ed=edits['pet:'+p.off+':'+k];
+      const cur=ed?ed.val:i32(S.buf,sp.off);
+      h+='<div class="flex" style="margin:5px 0">'+
+         '<span style="width:56px"><b>'+lab+'</b></span>'+
+         '<input type="number" id="pf_'+k+'" value="'+cur+'" style="width:110px">'+
+         '<button data-pset="'+k+'">写入</button>'+
+         (ed?('<button data-pclr="'+k+'">撤销</button><span class="badge wn">已改</span>')
+            :('<span class="badge mono">当前 '+cur+'</span>'))+'</div>';
+    });
+    h+='<div class="badge" style="margin-top:6px;display:block">等级上限 '+p.lvLimit+
+       ' · 月饲养费 '+p.monthCost+' · 价值 '+p.value+'</div>';
+    box.innerHTML=h;
+    KEYS.forEach(([k])=>{
+      const el=$('pf_'+k); if(!el) return;
+      el.onchange=()=>{
+        const v=parseInt(el.value,10); if(!isFinite(v)) return;
+        const sp=petFieldSpec(p,k);
+        if(v===i32(S.buf,sp.off)) delete edits['pet:'+p.off+':'+k];
+        else edits['pet:'+p.off+':'+k]={off:sp.off,val:v,type:'i32'};
+        renderPets();
+      };
+    });
+  }
+  const sel=$('petAddPick');
+  if(sel){
+    const keep=sel.value;
+    const own=petOwnedMap();
+    const list=petOptions();
+    sel.innerHTML = list.length
+      ? list.map(t=>'<option value="'+esc(t.id)+'">'+esc(t.nm)+'（'+esc(t.id)+'）'+
+          (own[t.id]?(' · 已有×'+own[t.id]):' · 新品种')+(t.mod?' · MOD':'')+'</option>').join('')
+      : '<option value="">（物品库里没有宠物清单，先跑一次「更新物品库」）</option>';
+    if(keep&&sel.querySelector('option[value="'+keep+'"]')) sel.value=keep;
+  }
+  $('btnPetAddClear').style.display=PETS.add.length?'':'none';
+  if(PETS.add.length){
+    $('petAddHint').innerHTML='待添加 <b>'+PETS.add.length+'</b> 只：'+
+      PETS.add.map(a=>{ const inf=(window.PET_CAT||{})[a.targetId];
+        return esc(inf?inf[0]:((PETS.recs[a.tmplIdx||0]||{}).name||a.targetId)); }).join('、')+
+      '。点 ⑩ 生成并校验即会写入。';
+  }
+}
+function scanCities(){
+  CITY=null;
+  if(!S) return;
+  const b=S.buf, n=b.length;
+  const dv=new DataView(b.buffer,b.byteOffset,b.byteLength);
+  const out={};
+  for(let i=0;i+7<n;i++){
+    if(b[i]!==6||b[i+1]!==67||b[i+2]!==83) continue;        // 0x06 'C' 'S'
+    const c1=b[i+3]-48,c2=b[i+4]-48,c3=b[i+5]-48,c4=b[i+6]-48;
+    if(c1<0||c1>9||c2<0||c2>9||c3<0||c3>9||c4<0||c4>9) continue;
+    const cid='CS'+c1+c2+c3+c4;
+    const lo=i-0x148;
+    if(lo<12) continue;
+    for(let sec=i-8;sec>=lo;sec--){
+      const N=i32(b,sec+4);
+      if(!(N>=1&&N<=60)) continue;
+      const f=dv.getFloat32(sec,true);
+      /* 2026-10-14：治安不再保证是整数值（实测百济 = 996.6），旧代码要求 f 为整数会把整条
+         记录跳过，于是该城读到别处的假记录。现在只要求 0<f<=1000，靠下面的「列表 + 本城
+         CS 锚点」双重校验来防误判。 */
+      if(!(f>0&&f<=1000)) continue;
+      const money=i32(b,sec-12), food=i32(b,sec-8), pop=i32(b,sec-4);
+      if(money<0||money>90000000) continue;
+      if(food<0||food>3000000) continue;
+      if(pop<0||pop>9000000) continue;
+      /* 2026-10-14：城市记录的「武将列表」起点偏移会变（实测 3 字节填充后才是列表），
+         所以依次试 sec+4..sec+20，并且要求**列表结束后 0x140 内出现本城的 [06]CSxxxx 锚点**，
+         这样既容错又不会认错记录（旧代码写死 sec+8，导致百济等城市读到别的记录）。 */
+      let pl=null;
+      for(let off=4;off<=20;off++){
+        const t=parseCityList(b,sec+off,N);
+        if(!t) continue;
+        const hi=Math.min(b.length-7,t.end+0x140);
+        let hit=false;
+        for(let k=t.end;k<hi;k++){
+          if(b[k]===6&&b[k+1]===67&&b[k+2]===83){
+            const got='CS'+String.fromCharCode(b[k+3],b[k+4],b[k+5],b[k+6]);
+            if(got===cid){ hit=true; break; }
+          }
+        }
+        if(hit){ pl=t; break; }
+      }
+      if(!pl) continue;
+      let morale=null;
+      const last=pl.items[pl.items.length-1];
+      if(last&&last.id.indexOf('NWJ')===0){
+        const fv=dv.getFloat32(last.valOff,true);
+        if(fv>=0&&fv<=1000) morale={off:last.valOff,val:Math.fround(fv)};
+      }
+      const score=N*10000000+pop;
+      const prev=out[cid];
+      if(!prev||score>prev.score)
+        out[cid]={cid,sec,money,food,pop,security:Math.round(f),N,morale,score};
+      break;
+    }
+  }
+  const list=Object.keys(out).map(k=>out[k]).sort((a,z)=>a.cid<z.cid?-1:1);
+  CITY={list,byId:out};
+}
+function cityName(cid){ return (window.CITY_NAME&&window.CITY_NAME[cid])||cid; }
+function cityOptions(q){
+  if(!CITY) return [];
+  const list=CITY.list.map(c=>({cid:c.cid,nm:cityName(c.cid)}));
+  if(!q) return list;
+  return list.filter(t=>t.nm.indexOf(q)>=0||t.cid.indexOf(q)>=0||t.cid.slice(2).indexOf(q)>=0);
+}
+function cityFieldSpec(c,key){
+  if(!c) return null;
+  if(key==='money')    return {off:c.sec-12,type:'i32',label:'资金'};
+  if(key==='food')     return {off:c.sec-8, type:'i32',label:'军粮'};
+  if(key==='pop')      return {off:c.sec-4, type:'i32',label:'人口'};
+  if(key==='security') return {off:c.sec,    type:'f32',label:'治安'};
+  if(key==='morale'&&c.morale) return {off:c.morale.off,type:'f32',label:'民心'};
+  return null;
+}
+function curCity(){ const sel=$('cityPick'); return (CITY&&sel)?CITY.byId[sel.value]:null; }
+const cityShown=v=>Number(Number(v).toFixed(3));
+function fillCitySel(q){
+  const sel=$('cityPick'); if(!sel) return;
+  const list=cityOptions(q);
+  sel.innerHTML = list.length
+    ? list.map(t=>'<option value="'+esc(t.cid)+'">'+esc(t.nm)+'（'+esc(t.cid)+'）</option>').join('')
+    : '<option value="">（无匹配）</option>';
+  if(!sel.value && list.length){
+    const my=(S&&S.info&&window.CITY_ID)?window.CITY_ID[S.info.place]:null;
+    if(my && list.some(t=>t.cid===my)) sel.value=my;
+  }
+  renderCityFields();
+}
+function renderCityFields(){
+  const box=$('cityFields'); if(!box) return;
+  const c=curCity();
+  if(!c){ box.innerHTML='<span class="badge wn">这存档里没有该城市的记录（空城 / 荒野城不存运行时数据）。</span>'; return; }
+  const cur={money:c.money,food:c.food,pop:c.pop,security:c.security,morale:c.morale?c.morale.val:0};
+  const keys=['money','food','pop','security'].concat(c.morale?['morale']:[]);
+  let h='';
+  keys.forEach(k=>{
+    const sp=cityFieldSpec(c,k);
+    const ed=edits['city:'+c.cid+':'+k];
+    h+='<div class="flex" style="margin:5px 0">'+
+       '<span style="width:52px"><b>'+sp.label+'</b></span>'+
+       '<input type="number" id="cf_'+k+'" value="'+cityShown(ed?ed.val:cur[k])+'" style="width:120px">'+
+       '<button data-cset="'+k+'">写入</button>'+
+       (ed ? ('<button data-cclr="'+k+'">撤销</button><span class="badge wn">已改（原 '+cityShown(cur[k])+'）</span>')
+           : ('<span class="badge mono">当前 '+cityShown(cur[k])+'</span>'))+
+       '</div>';
+  });
+  h+='<div class="badge" style="margin-top:5px;display:block">记录：治安 @0x'+c.sec.toString(16).toUpperCase()+
+     ' · 城内武将 '+c.N+' 人'+(c.morale?(' · 民心 @0x'+c.morale.off.toString(16).toUpperCase()):'')+'</div>';
+  box.innerHTML=h;
+}
+function renderCity(){
+  const card=$('cardCity'); if(!card) return;
+  if(!S){ card.style.display='none'; return; }
+  card.style.display='';
+  const cnt=CITY?CITY.list.length:0;
+  const tag=$('cityTag');
+  tag.textContent = cnt?('已定位 '+cnt+' 座城'):'未定位';
+  tag.className = cnt?'tag ok':'tag wn';
+  if($('cityQ')&&$('cityQ').value) $('cityQ').value='';
+  fillCitySel('');
+  $('cityInfo').innerHTML = cnt
+    ? ('这存档里 '+cnt+' 座城有运行时数据（其余为空城 / 荒野城，没有记录）。默认选中你当前所在地 <b>'+esc((S.info&&S.info.place)||'—')+'</b>。')
+    : '没在存档里找到城市记录。';
+}
+if($('cityQ')){
+  $('cityQ').addEventListener('input',()=>fillCitySel($('cityQ').value.trim()));
+  $('cityPick').addEventListener('change',()=>renderCityFields());
+  $('cityFields').addEventListener('click',e=>{
+    const t=e.target; if(!t||!t.dataset||!S) return;
+    const c=curCity(); if(!c) return;
+    const k=t.dataset.cset||t.dataset.cclr; if(!k) return;
+    const sp=cityFieldSpec(c,k); if(!sp) return;
+    const K='city:'+c.cid+':'+k;
+    if(t.dataset.cclr!==undefined){
+      delete edits[K]; built=null; renderCityFields();
+      $('msgOut').innerHTML=wn('已撤销「'+sp.label+'」的修改。'); return;
+    }
+    const raw=Number($('cf_'+k).value);
+    if(!isFinite(raw)){ alert('请输入数字。'); return; }
+    if(sp.type==='f32'){
+      if(raw<0||raw>1000){ alert('该项范围 0~1000。'); return; }
+    }else{
+      if(raw<0||raw>90000000){ alert('数值超出合理范围。'); return; }
+    }
+    const v = sp.type==='f32' ? Math.fround(raw) : Math.round(raw);
+    edits[K]={off:sp.off, val:v, type:sp.type};
+    built=null; renderCityFields();
+    $('msgOut').innerHTML=ok(cityName(c.cid)+' · '+sp.label+' → '+cityShown(v)+
+      '（定点 0x'+sp.off.toString(16).toUpperCase()+'）\n回 ⑩ 生成并校验新存档。');
+  });
+}
+
+/* ---- ⑨ 宠物：属性改写 + 添加 ---- */
+if($('petFields')){
+  $('petFields').addEventListener('click',e=>{
+    const t=e.target; if(!t||!t.dataset||!S||!PETS) return;
+    const p=(PETS.sel>=0)?PETS.recs[PETS.sel]:null; if(!p) return;
+    const k=t.dataset.pset||t.dataset.pclr; if(!k) return;
+    const sp=petFieldSpec(p,k); if(!sp) return;
+    const K='pet:'+p.off+':'+k;
+    if(t.dataset.pclr!==undefined){
+      delete edits[K]; built=null; renderPets();
+      $('msgOut').innerHTML=wn('已撤销「'+sp.label+'」的修改。'); return;
+    }
+    const raw=Math.round(Number($('pf_'+k).value));
+    if(!isFinite(raw)){ alert('请输入数字。'); return; }
+    if(raw<0||raw>3000000){ alert('数值超出合理范围（0 ~ 3000000）。'); return; }
+    edits[K]={off:sp.off,val:raw,type:'i32'};
+    built=null; renderPets();
+    $('msgOut').innerHTML=ok(p.name+' · '+sp.label+' → '+raw+
+      '（定点 0x'+sp.off.toString(16).toUpperCase()+'）\n回 ⑩ 生成并校验新存档。');
+  });
+  $('btnPetAdd').onclick=()=>{
+    if(!PETS||!PETS.recs.length){ alert('存档里没有宠物，没有可用于复制的模板。'); return; }
+    const tid=$('petAddPick').value;
+    if(!tid){ alert('请先选择一个宠物品种。'); return; }
+    let ti=PETS.recs.findIndex(r=>r.id===tid);
+    if(ti<0) ti=0;                                  // 新品种 → 用第一只做模板重建
+    PETS.add.push({targetId:tid, tmplIdx:ti});
+    built=null; renderPets();
+    const inf=(window.PET_CAT||{})[tid];
+    $('msgOut').innerHTML=ok('已排入待添加：'+(inf?inf[0]:tid)+
+      (PETS.recs[ti].id===tid?'（复制现成的一只）':'（新品种，用「'+PETS.recs[ti].name+'」当模板重建）')+
+      '。\n点 ⑩「生成并校验新存档」导出，进游戏验证读档与宠物是否出现。');
+  };
+  $('btnPetAddClear').onclick=()=>{
+    if(!PETS) return;
+    PETS.add=[]; renderPets();
+    $('msgOut').innerHTML=wn('已清空待添加的宠物。');
+  };
+}
+
+function scanRes(){
+  RES=null;
+  if(!S) return;
+  const b=S.buf;
+  const money=findMoneyCopies(b);
+  const fam=findFactionRes(b);
+  RES={money,
+       famHead:findFamilyHead(b),
+       faction:fam,
+       tech:  (fam&&fam.tech)?{off:fam.techOff,val:fam.tech}:null,
+       strat: (fam&&fam.strat)?{off:fam.stratOff,val:fam.strat}:null,
+       treasury:(fam&&fam.treasury)?{off:fam.treasuryOff,val:fam.treasury}:null};
+}
+function scanEqt(){
+  EQT=null; eqDirty=false;
+  if(!S||!RES||!RES.money||RES.money.copies.length<2) return;
+  const all=findEqTitleLists(S.buf,RES.money.copies[1]);
+  if(!all.length) return;
+  /* 锚点窗口里会扫到多个同类列表：第 1 个是玩家自己的装配称号，
+     后面几个属于其它武将 / 家族称号库 —— 只保留玩家的那一条，避免误改别人的。
+     （2026-10-08 用户实测确认） */
+  const mine=all.slice(0,1);
+  EQT={lists:mine.map(L=>({countOff:L.countOff,start:L.start,end:L.end,
+                           ids:L.ids.slice(),newIds:L.ids.slice()})),
+       sel:0, total:all.length};
+}
+function titleOptions(q){
+  const list=[];
+  if(window.ITEM_CAT) for(const id in ITEM_CAT){
+    if(id.slice(0,3)!=='HTC') continue;
+    const nm=ITEM_CAT[id][0]||id;
+    if(q && nm.indexOf(q)<0 && id.indexOf(q)<0) continue;
+    list.push({id,nm});
+  }
+  list.sort((a,b)=>a.nm.localeCompare(b.nm,'zh'));
+  return list;
+}
+/* ---- 称号效果描述（物品库条目 [7]=效果描述 [8]=专属人物）---- */
+const TITLE_DESC_BOX={eqPick:'eqDesc',titlePick:'tpDesc',titleAddPick:'taDesc'};
+const TITLE_CNT_BOX ={eqPick:'eqCnt', titlePick:'tpCnt', titleAddPick:'taCnt'};   // 下拉旁显示「共 N 个」
+
+/* ---- 称号去重辅助：背包 / 装配列表里已有的称号 ---- */
+const IS_TITLE=id=>/^HTC/.test(String(id));
+function bagTitleMap(){                       // id -> {gi, qty}（跨全部背包组）
+  const m={};
+  if(BAG) BAG.groups.forEach((g,gi)=>g.items.forEach(it=>{
+    if(!IS_TITLE(it.id)) return;
+    if(m[it.id]) m[it.id].qty+=it.qty; else m[it.id]={gi,qty:it.qty};
+  }));
+  return m;
+}
+function findTitleInBag(id){                  // 返回第一个命中的 {gi,it} 或 null
+  if(!BAG) return null;
+  for(let gi=0;gi<BAG.groups.length;gi++){
+    const it=BAG.groups[gi].items.find(x=>x.id===id);
+    if(it) return {gi,it};
+  }
+  return null;
+}
+function equippedTitleMap(){                  // 装配列表里已装的称号（裸 id）
+  const m={};
+  if(EQT&&EQT.lists[EQT.sel]) EQT.lists[EQT.sel].newIds.forEach(id=>{ m[id]=(m[id]||0)+1; });
+  return m;
+}
+function titleTip(id){
+  const r=listEntryInfo(id);
+  const inf=r?r.info:null, rid=r?r.id:id;
+  if(!inf) return '';
+  let t=(inf[0]||'')+'（'+rid+'）'+(inf[3]?' · 等级 '+inf[3]:'');
+  const rk=(inf[8]||'').trim(), d=(inf[7]||'').trim();
+  if(rk) t+='\n专属人物：'+rk;
+  if(d) t+='\n\n'+d;
+  return t;
+}
+function titleDescHtml(id){
+  const r=listEntryInfo(id);
+  const inf=r?r.info:null, rid=r?r.id:id;
+  if(!inf) return '<span class="badge">（物品库里没有这个条目的信息）</span>';
+  const d=(inf[7]||'').trim(), rk=(inf[8]||'').trim();
+  let h='<b>'+esc(inf[0]||rid)+'</b> <span class="badge">等级 '+esc(inf[3]||'?')+'</span>'+
+        ' <span class="badge mono">'+esc(rid)+'</span>'+
+        (r&&r.pre&&r.pre!=='HTC'?' <span class="badge" style="background:var(--ac2);color:var(--ac)"> '+esc(r.info[1]||r.pre)+'</span>':'');
+  if(rk) h+=' <span class="badge" style="background:var(--wnb);color:var(--wn);border:1px solid #f1ddba">专属：'+esc(rk)+'</span>';
+  if(d) h+='<div style="margin-top:3px">'+esc(d).replace(/\n{2,}/g,'\n').replace(/\n/g,'<br>')+'</div>';
+  else h+='<div class="badge" style="margin-top:3px">（物品库没有这条的效果描述，MOD 称号若想带描述，可在 MOD 的 HeroTitle.json 里补 description 字段后「更新物品库」）</div>';
+  return h;
+}
+function updTitleDesc(selId){
+  const sel=$(selId), boxId=TITLE_DESC_BOX[selId];
+  if(!sel||!boxId||!$(boxId)) return;
+  const box=$(boxId);
+  if(!sel.value){ box.style.display='none'; box.innerHTML=''; return; }
+  box.style.display=''; box.innerHTML=titleDescHtml(sel.value);
+}
+function fillTitleSel(sel,q){
+  const list=titleOptions(q);
+  const have=(sel.id==='titleAddPick')?bagTitleMap():null;   // 「添加到背包」下拉标出已有
+  sel.innerHTML = list.length
+    ? list.map(t=>{
+        const h=have&&have[t.id];
+        return '<option value="'+esc(t.id)+'" title="'+esc(titleTip(t.id))+'">'+esc(t.nm)+
+               '（'+esc(t.id)+'）'+(h?(' · 已有×'+h.qty):'')+'</option>';
+      }).join('')
+    : '<option value="">（无匹配）</option>';
+  const cnt=$(TITLE_CNT_BOX[sel.id]);                        // 显示可选数量，让人一眼看出「这里是全部称号」
+  if(cnt) cnt.textContent=(q?('筛出 '+list.length+' 个'):('共 '+list.length+' 个'));
+  updTitleDesc(sel.id);
+}
+Object.keys(TITLE_DESC_BOX).forEach(id=>{
+  const el=$(id);
+  if(el) el.addEventListener('change',()=>updTitleDesc(id));
+});
+function renderRes(){
+  const box=$('resList');
+  if(!S){ box.innerHTML=''; return; }
+  if(!RES||!RES.money){ box.innerHTML='<span class="badge wn">金钱字段定位失败（头部结构异常），请用下面手动定位</span>'; return; }
+  const m=RES.money;
+  const row=(label,offs,cur,pre,note)=>
+    '<div style="margin:4px 0"><b>'+label+'</b> <span class="badge mono">当前 '+cur+
+    '（'+offs.map(o=>'0x'+o.toString(16).toUpperCase()).join('、')+'）</span> '+
+    '<input type="number" id="'+pre+'v" style="width:110px" value="'+cur+'"> '+
+    '<button data-res="'+pre+'">写入</button> <button data-resclr="'+pre+'">撤销</button>'+
+    (note?' <span class="badge">'+note+'</span>':'')+'</div>';
+  let h=row('金钱',m.copies,m.val,'resM',m.copies.length>1?'头部+资产双份':'仅头部');
+  h+=RES.treasury?row('国库资金',[RES.treasury.off],RES.treasury.val,'resG','势力/家族块')
+      :'<div class="badge wn">国库资金：未定位（还没成立势力，或数值为 0 —— 可用下面手动定位）</div>';
+  h+=RES.tech?row('科技点',[RES.tech.off],RES.tech.val,'resT','势力/家族块')
+             :'<div class="badge wn">科技点：未定位（可能为 0，或用下面手动定位）</div>';
+  h+=RES.strat?row('策略点',[RES.strat.off],RES.strat.val,'resS',
+                   (RES.faction&&RES.faction.n2>0)?'势力块':'家族块')
+              :'<div class="badge wn">策略点：未定位（可能为 0，或用下面手动定位）</div>';
+  if(RES.faction)
+    h+='<div class="badge" style="margin-top:5px;display:block">资源块 @0x'+RES.faction.listOff.toString(16).toUpperCase()+
+       '（建筑 '+RES.faction.n1+' 项 · 附属 '+RES.faction.n2+' 项 · 候选打分 '+
+       RES.faction.cands.map(c=>c.score).join('/')+'）</div>';
+  box.innerHTML=h;
+}
+function renderEqt(){
+  const box=$('eqList');
+  if(!S){ box.innerHTML=''; return; }
+  if(!EQT||!EQT.lists.length){
+    box.innerHTML='<span class="badge wn">未找到装配称号列表（金钱锚点未定位或结构变化），可先用下面的展示称号替换</span>';
+    return;
+  }
+  let h='';
+  EQT.lists.forEach((L,k)=>{
+    h+='<div style="margin:4px 0 2px"><b>玩家装配列表</b>'+
+       ' <span class="badge ok">添加 / 删除 / 替换都改这里</span>'+
+       ' <span class="badge mono">count@0x'+L.countOff.toString(16).toUpperCase()+' = '+L.newIds.length+
+       (L.newIds.length!==L.ids.length?('（原 '+L.ids.length+'）'):'')+'</span>'+
+       (EQT.total>1?' <span class="badge">（已忽略其余 '+(EQT.total-1)+' 个：属于其他武将 / 家族）</span>':'')+
+       '</div>';
+    L.newIds.forEach((id,ii)=>{
+      const r=listEntryInfo(id);
+      const isT=r&&r.pre==='HTC';
+      const tip=r?titleTip(r.id):('条目 '+id+'：物品库中查不到（可能是 MOD 新增或非常规条目）');
+      const lab=r?('<b>'+esc(r.info[0])+'</b> <span class="badge">'+esc(r.info[1]||'')+'</span>')
+                 :('<b style="color:var(--er)">未知条目</b>');
+      const replTip=isT?'用上方下拉里选中的称号替换这一条'
+                       :(r?('注意：这条其实是【'+r.info[0]+'】('+r.info[1]+')，替换会把它变成所选称号')
+                           :'注意：这不是称号，替换会把它变成所选称号');
+      h+='<div style="margin:2px 0 2px 14px" title="'+esc(tip)+'">· '+lab+' <span class="mono">'+esc(id)+'</span> '+
+         '<button data-eqrepl="'+k+':'+ii+'" title="'+esc(replTip)+'">换成所选</button> '+
+         '<button data-eqdel="'+k+':'+ii+'" title="从装配列表移除这一条（会同步列表数）">删除</button></div>';
+    });
+  });
+  box.innerHTML=h;
+}
+function renderTitle(){
+  const card=$('cardTitle');
+  if(!S){ card.style.display='none'; return; }
+  card.style.display='';
+  const slots=(TITLE&&TITLE.slots)||[];
+  const tag=$('titleTag');
+  const okEqt=!!(EQT&&EQT.lists.length), okRes=!!(RES&&RES.money);
+  tag.textContent='装配称号'+(okEqt?'✓':'未定位')+' · 资源'+(okRes?'✓':'未定位');
+  tag.className=(okEqt&&okRes)?'tag ok':'tag wn';
+  if(!slots.length){
+    $('titleNow').textContent='存档里没找到含称号的魂装配列表（不影响上面的装配称号编辑）。';
+    $('titleHint').textContent='';
+  }else{
+    tag.title='';
+    let h='';
+    slots.forEach((s,si)=>{
+      const ts=s.items.filter(it=>/^HTC/.test(it.id));
+      h+='<div style="margin-bottom:3px"><b>列表 #'+(si+1)+'</b> '+
+         '<span class="badge mono">count@0x'+s.countOff.toString(16).toUpperCase()+' = '+s.count+'</span> '+
+         '<span class="badge">0x'+s.start.toString(16).toUpperCase()+'~0x'+s.end.toString(16).toUpperCase()+'</span></div>';
+      ts.forEach(it=>{
+        const info=itemInfo(it.id);
+        h+='<div style="margin:2px 0 2px 14px" title="'+esc(titleTip(it.id))+'">· <b>'+(info?esc(info[0]):esc(it.id))+'</b> '+
+           '<span class="mono">'+esc(it.id)+'</span> '+
+           '<span class="badge mono">@0x'+it.off.toString(16).toUpperCase()+'</span></div>';
+      });
+      if(!ts.length) h+='<div style="margin-left:14px" class="badge">（此列表无称号）</div>';
+    });
+    $('titleNow').innerHTML=h;
+    $('titleHint').innerHTML='替换是<b>原地等长写入</b>（10 字节 HTC 位），不改变文件长度。'+
+      '找到多个列表时默认改第一个（通常是你自己）。';
+  }
+  if(BAG){
+    const own=[];
+    BAG.groups.forEach((g,gi)=>g.items.forEach(it=>{ if(/^HTC/.test(it.id)) own.push({gi,id:it.id,qty:it.qty}); }));
+    $('titleOwn').innerHTML = own.length
+      ? own.map(o=>{ const info=itemInfo(o.id);
+          return '<span class="badge" style="margin-right:5px" title="'+esc(titleTip(o.id))+'">'+(info?esc(info[0]):esc(o.id))+
+                 ' ×'+o.qty+' <span class="mono">组'+o.gi+'</span></span>'; }).join('')
+      : '<span class="badge">背包里还没有称号</span>';
+  }else $('titleOwn').innerHTML='<span class="badge">背包未定位</span>';
+  fillTitleSel($('titlePick'),($('titleQ').value||'').trim());
+  fillTitleSel($('titleAddPick'),($('titleQ2').value||'').trim());
+  fillEqSel(($('eqQ').value||'').trim());
+  renderEqt();
+  renderRes();
+}
+$('titleQ').addEventListener('input',()=>fillTitleSel($('titlePick'),($('titleQ').value||'').trim()));
+$('titleQ2').addEventListener('input',()=>fillTitleSel($('titleAddPick'),($('titleQ2').value||'').trim()));
+
+$('btnTitleSet').onclick=()=>{
+  if(!S||!TITLE||!TITLE.slots.length){ alert('没找到称号槽，无法替换。'); return; }
+  const id=$('titlePick').value;
+  if(!id||!HTC_RE.test(id)){ alert('请选一个称号。'); return; }
+  const slot=TITLE.slots[0];
+  const nb=TE.encode(id);
+  if(nb.length!==10){ alert('称号 ID 长度异常：'+nb.length); return; }
+  let n=0;
+  for(const it of slot.items){
+    if(!HTC_RE.test(it.id)) continue;
+    for(let k=0;k<10;k++) edits['id:'+(it.off+1+k)]={off:it.off+1+k, val:nb[k], type:'u8'};
+    n++;
+  }
+  if(!n){ alert('这个列表里没有称号条目。'); return; }
+  const info=itemInfo(id);
+  $('msgOut').innerHTML=ok('已把 '+n+' 处称号替换为「'+(info?info[0]:id)+'」（'+id+'），等长写入，文件长度不变。\n点 ⑩「生成并校验新存档」导出。');
+  renderTitle();
+};
+$('btnTitleAdd').onclick=()=>{
+  if(!BAG){ alert('背包未定位。'); return; }
+  const id=$('titleAddPick').value; if(!id) return;
+  const gi=9, g=BAG.groups[gi];
+  if(!g){ alert('背包组 9 不存在。'); return; }
+  const have=findTitleInBag(id);
+  if(have){
+    alert('背包里已经有「'+(itemInfo(id)?itemInfo(id)[0]:id)+'」了（组 '+have.gi+'，数量 '+have.it.qty+'）。\n'+
+          '称号是唯一物品，重复添加没有意义，本次已跳过。');
+    renderTitle();
+    return;
+  }
+  g.items.push({id, qty:1, f2:0, f3:0});
+  bagDirty=true; renderBag(); renderTitle();
+  const info=itemInfo(id);
+  $('msgOut').innerHTML=ok('已把称号「'+(info?info[0]:id)+'」加入背包组 '+gi+' · '+grpLabel(gi)+'。\n点 ⑩「生成并校验新存档」导出。');
+};
+$('btnTitleAddAll').onclick=()=>{
+  if(!BAG){ alert('背包未定位。'); return; }
+  const q=($('titleQ2').value||'').trim();
+  const list=titleOptions(q);
+  if(!list.length){ alert('没有匹配的称号。'); return; }
+  const bm=bagTitleMap();
+  const fresh=list.filter(t=>!bm[t.id]);
+  const dupe=list.length-fresh.length;
+  if(!fresh.length){
+    $('msgOut').innerHTML=wn('筛选出的 '+list.length+' 个称号背包里全都已经有了，没有新增。\n（称号是唯一物品，重复添加没有意义）');
+    return;
+  }
+  if(fresh.length>60 && !confirm('当前筛选到 '+list.length+' 个称号，其中 '+fresh.length+' 个是新的，全部加入会很长。确定继续？')) return;
+  const gi=9, g=BAG.groups[gi];
+  let add=0;
+  for(const t of fresh){ g.items.push({id:t.id, qty:1, f2:0, f3:0}); add++; }
+  bagDirty=true; renderBag(); renderTitle();
+  $('msgOut').innerHTML=ok('已把筛选出的 '+list.length+' 个称号加入背包组 '+gi+'：新增 '+add+' 条'+
+    (dupe?('，跳过 '+dupe+' 个（背包里已有，称号不重复）'):'')+'。\n点 ⑩「生成并校验新存档」导出。');
+};
+
+/* ---- 装配称号：添加 / 删除 / 替换 ---- */
+$('eqQ').addEventListener('input',()=>fillEqSel(($('eqQ').value||'').trim()));
+$('eqList').addEventListener('click',e=>{
+  const t=e.target; if(!t.dataset) return;
+  if(t.dataset.eqdel){
+    if(!EQT) return;
+    const kk=t.dataset.eqdel.split(':'), k=+kk[0], ii=+kk[1];
+    const L=EQT.lists[k];
+    if(L.newIds.length<=1){ alert('至少保留一个称号；想换就先加新的再删旧的。'); return; }
+    L.newIds.splice(ii,1); eqDirty=true; built=null;
+    if($('dlBox')) $('dlBox').style.display='none';
+    renderEqt();
+  }else if(t.dataset.eqrepl){
+    if(!EQT) return;
+    const nid=$('eqPick').value;
+    if(!nid){ alert('先在上方搜索并选中要换成的称号。'); return; }
+    const kk=t.dataset.eqrepl.split(':'), k=+kk[0], ii=+kk[1];
+    const L2=EQT.lists[k];
+    if(L2&&L2.newIds.some((x,j)=>x===nid&&j!==ii)){
+      alert('装配列表里已经有「'+eqTitleName(nid)+'」了，换成它会重复，本次已跳过。\n'+
+            '（同一条称号不建议装配两次）');
+      return;
+    }
+    EQT.lists[k].newIds[ii]=nid; eqDirty=true; built=null;
+    if($('dlBox')) $('dlBox').style.display='none';
+    renderEqt();
+  }
+});
+$('btnEqAdd').onclick=()=>{
+  if(!S){ alert('先载入存档。'); return; }
+  if(!EQT||!EQT.lists.length){ alert('未找到装配称号列表，无法添加。'); return; }
+  const nid=$('eqPick').value;
+  if(!nid){ alert('先搜索并选中一个称号。'); return; }
+  const L=EQT.lists[EQT.sel];
+  if(L.newIds.indexOf(nid)>=0){
+    alert('装配列表里已经有「'+eqTitleName(nid)+'」了，重复添加没有意义，本次已跳过。');
+    renderEqt();
+    return;
+  }
+  if(L.newIds.length>=30){ alert('装配称号已达 30 个上限。'); return; }
+  L.newIds.push(nid); eqDirty=true; built=null;
+  if($('dlBox')) $('dlBox').style.display='none';
+  renderEqt();
+  $('msgOut').innerHTML=ok('已把「'+eqTitleName(nid)+'」加入装配称号列表（现有 '+L.newIds.length+' 个）。\n点 ⑩「生成并校验新存档」导出，进游戏验证读档与称号生效。');
+};
+
+/* ---- 资源数值：金钱 / 策略点 / 科技点 ---- */
+function resTargets(pre){
+  if(!RES) return null;
+  if(pre==='resM') return RES.money?RES.money.copies.slice():null;
+  if(pre==='resT') return RES.tech?[RES.tech.off]:null;
+  if(pre==='resS') return RES.strat?[RES.strat.off]:null;
+  if(pre==='resG') return RES.treasury?[RES.treasury.off]:null;
+  return null;
+}
+$('resList').addEventListener('click',e=>{
+  const t=e.target; if(!t||!t.dataset||!S||!RES) return;
+  if(t.dataset.res){
+    const pre=t.dataset.res;
+    const offs=resTargets(pre);
+    if(!offs||!offs.length){ alert('该字段未定位。'); return; }
+    const inp=$(('resM'===pre||'resT'===pre||'resS'===pre)?pre+'v':'resMv');
+    const nv=Number((inp&&inp.value||'').trim());
+    if(!isFinite(nv)||nv<0||nv>2000000000){ alert('填一个 0~20 亿的整数。'); return; }
+    if(offs.length>6 && !confirm('金钱同值出现 '+offs.length+' 处，全部一起改吗？\n（正常是 2 处：头部+资产块）')) return;
+    for(const o of offs) edits['raw:'+o]={off:o,val:nv,type:'i32'};
+    built=null; if($('dlBox')) $('dlBox').style.display='none';
+    $('msgOut').innerHTML=ok('已登记 '+labelOfRes(pre)+' 写入 '+nv+'（'+offs.length+' 处：'+
+      offs.map(o=>'0x'+o.toString(16).toUpperCase()).join('、')+'）。\n点 ⑩「生成并校验新存档」导出。');
+  }else if(t.dataset.resclr){
+    const pre=t.dataset.resclr;
+    const offs=resTargets(pre)||[];
+    for(const o of offs) delete edits['raw:'+o];
+    built=null;
+    $('msgOut').innerHTML=ok('已撤销 '+labelOfRes(pre)+' 的改写。');
+  }
+});
+function labelOfRes(pre){ return pre==='resM'?'金钱':pre==='resT'?'科技点':'策略点'; }
+
+
+/* 数值定位：按值搜全档，定位后直接改写（策略点 / 科技点 / 金钱都靠它） */
+let NV_HITS=[];
+$('btnNvSearch').onclick=()=>{
+  if(!S){ alert('先载入存档。'); return; }
+  const raw=($('nvVal').value||'').trim();
+  if(raw===''){ alert('填游戏里看到的数值。'); return; }
+  const v=Number(raw); if(!isFinite(v)){ alert('数值不合法。'); return; }
+  const ty=$('nvType').value;
+  const b=S.buf, dv=new DataView(b.buffer,b.byteOffset,b.byteLength);
+  const hits=[];
+  const step=(ty==='i16')?2:4;
+  for(let o=0;o+step<=b.length;o++){
+    let got=null;
+    try{
+      if(ty==='i32') got=dv.getInt32(o,true);
+      else if(ty==='u32') got=dv.getUint32(o,true);
+      else if(ty==='f32') got=dv.getFloat32(o,true);
+      else got=dv.getInt16(o,true);
+    }catch(e){ continue; }
+    if(got===v){ hits.push(o); if(hits.length>=1500) break; }
+  }
+  NV_HITS=hits;
+  const tb=$('tblNv').querySelector('tbody'); tb.innerHTML='';
+  hits.slice(0,200).forEach(o=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td class="mono">0x'+o.toString(16).toUpperCase()+'</td>'+
+      '<td class="mono">'+v+'</td>'+
+      '<td class="badge">'+esc(contextStr(o))+'</td>';
+    tb.appendChild(tr);
+  });
+  $('nvSlot').innerHTML = hits.length
+    ? hits.slice(0,200).map(o=>'<option value="'+o+'">0x'+o.toString(16).toUpperCase()+
+        ' — '+esc(contextStr(o)).slice(0,40)+'</option>').join('')
+    : '<option value="">（无命中）</option>';
+  $('nvStat').textContent='命中 '+hits.length+' 处'+(hits.length>200?'（表格与下拉只列前 200）':'')+
+    '。选一个偏移、填新值、点「写入」。';
+};
+$('btnNvSet').onclick=()=>{
+  const off=parseInt($('nvSlot').value,10);
+  if(!isFinite(off)){ alert('先搜到偏移再写入。'); return; }
+  const nv=Number(($('nvNew').value||'').trim());
+  if(!isFinite(nv)){ alert('填要改成的值。'); return; }
+  const ty=$('nvType').value;
+  const t=(ty==='i16')?'i16':(ty==='f32')?'f32':'i32';
+  edits['raw:'+off]={off, val:nv, type:t};
+  $('nvStat').textContent='已在 0x'+off.toString(16).toUpperCase()+' 登记写入 '+nv+'（'+t+'）。点 ⑩ 生成新存档生效。';
+};
+$('btnNvClear').onclick=()=>{
+  const off=parseInt($('nvSlot').value,10);
+  if(!isFinite(off)) return;
+  delete edits['raw:'+off];
+  $('nvStat').textContent='已清除 0x'+off.toString(16).toUpperCase()+' 的改写。';
+};
+
+/* ============ 对比另一份存档 ============ */
+$('btnDiffPick').onclick=()=>$('diffFile').click();
+$('diffFile').onchange=e=>{
+  const f=e.target.files[0]; if(!f||!S) return;
+  const fr=new FileReader();
+  fr.onload=()=>{
+    const o=new Uint8Array(fr.result);
+    const b=S.buf;
+    const tb=$('tblDiff').querySelector('tbody'); tb.innerHTML='';
+    if(o.length!==b.length){
+      $('diffStat').textContent='文件大小不同（'+b.length+' vs '+o.length+'），只能按重叠区对比';
+    }else $('diffStat').textContent='大小一致，逐字节对比中…';
+    const n=Math.min(b.length,o.length);
+    let i=0,groups=0;
+    while(i<n&&groups<400){
+      if(b[i]===o[i]){i++;continue;}
+      const st=i;
+      while(i<n&&b[i]!==o[i]&&i-st<64) i++;
+      const len=i-st;
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td class="mono">0x${st.toString(16).toUpperCase()}<br><span class="badge">${len} 字节</span></td>
+        <td class="mono">${hx(b,st,Math.min(len,16))} ${len>16?'…':''}<br>
+        → ${hx(o,st,Math.min(len,16))} ${len>16?'…':''}<br>
+        <span class="badge">${esc(contextStr(st))}</span></td>`;
+      tb.appendChild(tr);
+      groups++;
+    }
+    $('diffStat').textContent='发现 '+groups+' 处差异区（最多显示 400 处）';
+    e.target.value='';
+  };
+  fr.readAsArrayBuffer(f);
+};
+
+/* ============ 生成 + 自检 ============ */
+let built=null;
+$('btnBuild').onclick=()=>{
+  if(!S) return;
+  try{ built=build(); }
+  catch(err){ built=null; $('dlBox').style.display='none';
+    $('msgOut').innerHTML=er('校验未通过，未生成文件：\n'+err.message+'\n\n（你的原文件不受影响）'); return; }
+  const list=built.changes;
+  $('msgOut').innerHTML=ok('校验通过：新存档 '+built.out.length.toLocaleString()+' 字节，共 '+
+    built.n+' 条武将记录，所有改动字段已回读核对一致。')+
+    (list.length? '<div class="msg ok"><b>改动清单（'+list.length+' 项）</b>\n'+esc(list.join('\n'))+'</div>'
+                : wn('你还没有做任何修改。'));
+  $('dlBox').style.display='';
+};
+$('btnDl').onclick=()=>{ if(built) dl(new Blob([built.out],{type:'application/octet-stream'}),fileName.replace(/\.bak\.dat$/,'.dat')||'Save0.dat'); };
+$('btnResetAll').onclick=()=>{ edits={};heroEdits={};built=null;pendingDel=null; if(S){ loadBag(S.buf); scanRes(); scanEqt(); renderTitle(); renderDelBar(); }
+  $('msgOut').innerHTML=ok('已撤销全部修改（含背包）。');$('dlBox').style.display='none';
+  renderHeroList(); if(sel>=0) renderEdit(); };
+
+function build(){
+  let work=new Uint8Array(S.buf);
+  const ch=[];
+  /* 条数口径：parseHeroes 认不出带后缀的自建记录（它们是载入时额外补进列表的），
+     所以删掉一条 custom 记录不会让 parseHeroes 的条数变化；只有删掉它认得的记录才 -1。 */
+  const delH = pendingDel ? S.heroes[pendingDel.idx] : null;
+  const expectN = (S.baseN!=null?S.baseN:S.heroes.length) - ((delH && delH.kind!=='custom')?1:0);
+  /* 删除会平移它之后的字节：把「原偏移」换算成「删除后的新偏移」，落在已删区间内返回 -1 */
+  const delShift=off=>{
+    if(!pendingDel) return off;
+    const d=pendingDel;
+    const cuts=[{start:d.start,end:d.end}].concat(d.refs.map(r=>({start:r.itemStart,end:r.itemEnd})));
+    let sh=0;
+    for(const c of cuts){
+      if(off>=c.start && off<c.end) return -1;
+      if(c.end<=off) sh+=c.end-c.start;
+    }
+    return off-sh;
+  };
+  // 武将字段
+  const offsOf=h=> (h.sixOff!=null)?[h.sixOff]:[];
+  S.heroes.forEach((h,k)=>{
+    if(pendingDel && k===pendingDel.idx) return;  // 即将删除的记录不再改写
+    const e=heroEdits[k]; if(!e) return;
+    const offs=offsOf(h);
+    for(let j=0;j<6;j++){
+      const key='six'+j;
+      if(key in e && offs.length){
+        ch.push(`${h.id} ${h.name} ${LAB_SIX[j]}: ${i32(S.buf,offs[0]+j*4)} → ${e[key]}`);
+        for(const o0 of offs) putI32(work,o0+j*4,e[key]);
+      }
+      const tk='tal'+j;
+      if(tk in e && h.kind!=='dyn'){
+        const o=h.talOff+j*4;
+        ch.push(`${h.id} ${h.name} ${LAB_TAL[j]}: ${i32(S.buf,o)} → ${e[tk]}`);
+        putI32(work,o,e[tk]);
+      }
+    }
+    const oth=[['moral',O_MORAL,'道德'],['compat',O_COMPAT,'相性'],
+               ['birth',O_BIRTH,'出生年'],['show',O_SHOW,'登场年'],['death',O_DEATH,'死亡年']];
+    for(const [key,off,lb] of oth){
+      if(key in e && h.kind!=='dyn'){
+        const o=h.talOff+off;
+        ch.push(`${h.id} ${h.name} ${lb}: ${i32(S.buf,o)} → ${e[key]}`);
+        putI32(work,o,e[key]);
+      }
+    }
+    for(const [key,off,n,lab] of [['spt',O_SOULPT,3,LAB_SOULPT],['slv',O_SOULLV,3,LAB_SOULLV],
+                                  ['mst',O_MASTER,8,LAB_MASTER],['prf',O_PROF,24,LAB_PROF]]){
+      for(let j=0;j<n;j++){
+        const k=key+j;
+        if(k in e && offs.length){
+          ch.push(`${h.id} ${h.name} ${lab[j]}: ${i32(S.buf,offs[0]+off+j*4)} → ${e[k]}`);
+          for(const o0 of offs) putI32(work,o0+off+j*4,e[k]);
+        }
+      }
+    }
+  });
+  // 数值搜索 / 物品搜索的定点改写
+  let rawN=0;
+  for(const k in edits){
+    const it=edits[k];
+    if(it.type!=='u8') rawN++;
+    if(it.type==='i32') putI32(work,it.off,it.val);
+    else if(it.type==='i16') putI16(work,it.off,it.val);
+    else if(it.type==='u8') work[it.off]=it.val&255;
+    else putF32(work,it.off,it.val);
+  }
+  if(rawN) ch.push('定点改写 '+rawN+' 处（见搜索面板的操作）');
+
+  /* ---- 删除重复武将：放在所有改写之后 ----
+     删除会平移它之后的所有字节，所以必须等武将字段 / 定点改写全部用原偏移写完再做；
+     背包区段在玩家记录内、位于待删记录之前，不受影响，但下面仍做越界保护。 */
+  if(pendingDel){
+    const d=pendingDel;
+    if(BAG && bagDirty && d.start < BAG.end)
+      throw new Error('待删除记录区间与背包区段重叠，拒绝同时处理。请先单独执行删除，再改背包。');
+    const cuts=[{start:d.start,end:d.end,desc:'武将记录 '+d.id+' '+d.name+'（'+d.city+'）'}];
+    for(const r of d.refs)
+      cuts.push({start:r.itemStart,end:r.itemEnd,cntOff:r.cntOff,cnt:r.cnt,
+                 desc:'列表引用 @0x'+r.itemStart.toString(16)+'（第'+(r.idx+1)+'/'+r.cnt+'项）'});
+    cuts.sort((a,b)=>b.start-a.start);            // 从高偏移往低偏移删，低偏移不受影响
+    const done=[];                                // 已剪切区间（原偏移），用于修正 count 的写入位置
+    for(const c of cuts){
+      ch.push('删除 '+c.desc+'：0x'+c.start.toString(16)+' ~ 0x'+c.end.toString(16)+'，'+(c.end-c.start)+' 字节');
+      work=spliceBuf(work,c.start,c.end);
+      if(c.cntOff!=null){
+        let sh=0; for(const x of done) if(x.end<=c.cntOff) sh+=x.end-x.start;  // 只有切在它前面的才需要前移
+        ch.push('　该列表 count '+c.cnt+' → '+(c.cnt-1)+'（写入 0x'+(c.cntOff-sh).toString(16)+'）');
+        putI32(work,c.cntOff-sh,c.cnt-1);
+      }
+      done.push({start:c.start,end:c.end});
+    }
+  }
+
+  /* ---- 改动后的自检（此时偏移已因删除而平移，故只回读不按索引比对）---- */
+  if(u32(work,0)!==S.info.ver) throw new Error('版本戳被破坏');
+  const hp0=parseHeroes(work);
+  if(hp0.heroes.length!==expectN)
+    throw new Error('武将条目数从 '+S.heroes.length+' 变成 '+hp0.heroes.length+'（期望 '+expectN+'）');
+  S.heroes.forEach((h,k)=>{
+    if(pendingDel && k===pendingDel.idx) return;  // 即将删除的记录不校验
+    const e=heroEdits[k]; if(!e) return;
+    const voffs=offsOf(h).map(delShift);
+    const tOff=(h.kind==='dyn')?null:delShift(h.talOff);
+    if(voffs.some(o=>o<0) || (tOff!=null && tOff<0)) throw new Error(h.id+' 的字段落在已删除区间内，无法回读');
+    for(let j=0;j<6;j++){
+      if(('six'+j) in e && (()=>{for(const o0 of voffs) if(i32(work,o0+j*4)!==e['six'+j]) return true; return false;})())
+        throw new Error(h.id+' 六维第'+(j+1)+'项回读不一致');
+      if(('tal'+j) in e && tOff!=null && i32(work,tOff+j*4)!==e['tal'+j])
+        throw new Error(h.id+' 资质第'+(j+1)+'项回读不一致');
+    }
+    for(const [key,off] of [['moral',O_MORAL],['compat',O_COMPAT],['birth',O_BIRTH],['show',O_SHOW],['death',O_DEATH]]){
+      if(key in e && tOff!=null && i32(work,tOff+off)!==e[key]) throw new Error(h.id+' '+key+' 回读不一致');
+    }
+    for(const [key,off,n] of [['spt',O_SOULPT,3],['slv',O_SOULLV,3],['mst',O_MASTER,8],['prf',O_PROF,24]]){
+      for(let j=0;j<n;j++){
+        const kk=key+j;
+        if(kk in e){
+          for(const o0 of voffs)
+            if(i32(work,o0+off+j*4)!==e[kk]) throw new Error(h.id+' '+kk+' 回读不一致');
+        }
+      }
+    }
+  });
+  for(const k in edits){
+    const it=edits[k];
+    const o2=delShift(it.off);
+    if(o2<0) throw new Error('定点 0x'+it.off.toString(16)+' 落在已删除的记录区间内，无法保留，请先撤销该处改写');
+    const got = it.type==='i32' ? i32(work,o2)
+              : it.type==='i16' ? i16(work,o2)
+              : it.type==='u8'  ? work[o2]
+              : f32(work,o2);
+    if(got!==it.val) throw new Error('定点 0x'+it.off.toString(16)+' 回读不一致（'+got+'≠'+it.val+'）');
+  }
+
+  /* ---- 装配称号列表重排（会改变文件长度；在删除之后、背包重排之前）----
+     列表在玩家资产块里，位于背包区段之后，重定位可吸收删除造成的平移。 */
+  if(EQT && eqDirty){
+    const m2=moneySecondCopy(work);
+    if(m2<0) throw new Error('金钱第二副本未找到，无法重排装配称号列表');
+    const lists=findEqTitleLists(work,m2);
+    if(!lists.length) throw new Error('装配称号列表重定位失败');
+    const k=Math.min(EQT.sel,lists.length-1);
+    const L=lists[k], ui=EQT.lists[EQT.sel];
+    if(L.ids.join('|')!==ui.ids.join('|'))
+      throw new Error('装配称号列表与载入时不一致，请「撤销全部修改」后重新载入存档再操作');
+    if(BAG && L.start < BAG.end && L.end > BAG.start)
+      throw new Error('称号列表与背包区段重叠，拒绝同时处理（请先单独处理背包）');
+    if(ui.newIds.length<1||ui.newIds.length>60) throw new Error('装配称号数量异常：'+ui.newIds.length);
+    const parts=[]; let tot=0;
+    for(const id of ui.newIds){
+      if(!TID_RE.test(id)) throw new Error('称号 ID 不合法：'+id);
+      const eb=TE.encode(id);
+      if(eb.length<5||eb.length>16) throw new Error('称号 ID 长度异常：'+id);
+      parts.push(eb); tot+=1+eb.length;
+    }
+    const nb=new Uint8Array(tot); let q2=0;
+    for(const eb of parts){ nb[q2++]=eb.length; nb.set(eb,q2); q2+=eb.length; }
+    const delta=nb.length-(L.end-L.start);
+    work=spliceBuf(work,L.start,L.end);
+    const out2=new Uint8Array(work.length+nb.length);
+    out2.set(work.subarray(0,L.start),0); out2.set(nb,L.start); out2.set(work.subarray(L.start),L.start+nb.length);
+    work=out2;
+    putI32(work,L.countOff,ui.newIds.length);
+    /* 称号列表在背包区段之前：增删会平移背包，同步修正 BAG 偏移供背包重排使用 */
+    if(BAG && bagDirty && BAG.start>=L.end){ BAG.start+=delta; BAG.end+=delta; }
+    ch.push('装配称号：'+ui.ids.length+' → '+ui.newIds.length+' 个（'+(delta>=0?'+':'')+delta+' 字节）'+
+      '：'+ui.newIds.map(id=>eqTitleName(id)).join('、'));
+    const chk=findEqTitleLists(work,moneySecondCopy(work));
+    const kc=Math.min(EQT.sel,chk.length-1);
+    if(!chk.length||chk[kc].ids.join('|')!==ui.newIds.join('|'))
+      throw new Error('称号列表写后回读不一致，已中止（文件不会导出）');
+  }
+
+  /* ---- 背包重排（会改变文件长度，放在最后）---- */
+  let bagChanged=false, bagBytesOld=0, bagBytesNew=0, preSplice=null;
+  if(BAG && bagDirty){
+    // 先拦一种会丢改动的组合：⑤ 搜索面板的定点改写落在背包区段内 → 会被重排覆盖
+    for(const k in edits){
+      const it=edits[k];
+      const w=(it.type==='u8')?1:(it.type==='i16')?2:4;
+      if(it.off>=BAG.start && it.off+w<=BAG.end){
+        throw new Error('「⑤ 物品/数值搜索」里有一处定点改写落在背包区段内（0x'+it.off.toString(16).toUpperCase()+'），'
+          +'背包重排会把它覆盖掉。\n\n请点「撤销全部修改」，然后改用 ④ 背包面板来改这件物品。');
+      }
+    }
+    preSplice=work;                       // 重排前的缓冲（含所有已完成的定点/武将改动）
+    const newBuf=serBag(BAG.groups);
+    bagBytesOld=BAG.end-BAG.start;
+    bagBytesNew=newBuf.length;
+    const head=work.subarray(0,BAG.start);
+    const tail=work.subarray(BAG.end);
+    const out=new Uint8Array(head.length+newBuf.length+tail.length);
+    out.set(head,0); out.set(newBuf,head.length); out.set(tail,head.length+newBuf.length);
+    work=out;
+    bagChanged=true;
+    let tot=0; for(const g of BAG.groups) tot+=g.items.length;
+    ch.push('背包：重排 '+BAG.groups.length+' 个容器、共 '+tot+' 件；区段 '+
+            bagBytesOld+' → '+bagBytesNew+' 字节（文件总长 '+(out.length-S.buf.length>=0?'+':'')+(out.length-S.buf.length)+'）');
+    BAG.groups.forEach((g,gi)=>{
+      const oldC=bagCounts(BAG.oldByGrp[gi]||[]);
+      const newC=bagCounts(g.items.map(it=>it.id+'#'+it.qty));
+      for(const k in newC){ const d=newC[k]-(oldC[k]||0); if(d>0) ch.push('  ＋ 组'+gi+' '+(itemInfo(k.split('#')[0])||[k])[0]+' '+k+(d>1?' ×'+d:'')); }
+      for(const k in oldC){ const d=oldC[k]-(newC[k]||0); if(d>0) ch.push('  － 组'+gi+' 删除 '+(itemInfo(k.split('#')[0])||[k])[0]+' '+k); }
+    });
+  }
+
+  /* ---- 最终自检 ---- */
+  const check=new Uint8Array(work.length); check.set(work);
+  if(u32(check,0)!==S.info.ver) throw new Error('版本戳被破坏');
+  if(check.length!==work.length) throw new Error('长度异常');
+  const hp2=parseHeroes(check);
+  if(hp2.heroes.length!==expectN)
+    throw new Error('武将条目数从 '+S.heroes.length+' 变成 '+hp2.heroes.length+'（期望 '+expectN+'）');
+  if(bagChanged){
+    const r2=findBag(check);
+    if(!r2) throw new Error('背包重排后没能重新定位，已中止');
+    if(r2.groups.length!==BAG_NGRP) throw new Error('背包容器数异常：'+r2.groups.length);
+    for(let gi=0;gi<BAG_NGRP;gi++){
+      const a=BAG.groups[gi].items, b2=r2.groups[gi].items;
+      if(a.length!==b2.length) throw new Error('组'+gi+' 条数回读不一致（'+a.length+'≠'+b2.length+'）');
+      for(let ii=0;ii<a.length;ii++){
+        if(a[ii].id!==b2[ii].id) throw new Error('组'+gi+' 第'+(ii+1)+'件 ID 回读不一致');
+        if(a[ii].qty!==b2[ii].qty) throw new Error('组'+gi+' 第'+(ii+1)+'件数量回读不一致');
+      }
+    }
+    // 关键：和「重排前那一刻」逐字节比对（不是和原始存档比 —— 那会把别的正常改动误判成错误）
+    if(BAG.start>check.length) throw new Error('背包起点越界');
+    const shift=bagBytesNew-bagBytesOld;
+    for(let i=0;i<BAG.start;i++)
+      if(check[i]!==preSplice[i]) throw new Error('背包重排时搞坏了它之前的数据 @0x'+i.toString(16));
+    for(let i=BAG.end;i<preSplice.length;i++)
+      if(check[i+shift]!==preSplice[i]) throw new Error('背包重排时搞坏了它之后的数据 @0x'+i.toString(16));
+  }
+  /* ---- ⑨ 宠物：复制添加（会改变文件长度。放在全部自检之后，单独做回读校验）---- */
+  let finalOut=check;
+  if(PETS && PETS.add && PETS.add.length){
+    const pl=findPetList(check);
+    if(!pl) throw new Error('宠物列表重定位失败，无法添加宠物');
+    if(pl.recs.length!==PETS.recs.length)
+      throw new Error('宠物列表与载入时不一致（'+pl.recs.length+'≠'+PETS.recs.length+
+        '），请「撤销全部修改」后重新载入存档再操作');
+    const end=petRecEnd(check,pl.recs[pl.recs.length-1].off);
+    if(end<0) throw new Error('宠物列表结束位置未找到，拒绝添加');
+    let maxNum=0;
+    pl.recs.forEach(r=>{ const n=parseInt(r.num,10); if(isFinite(n)&&n>maxNum) maxNum=n; });
+    const pieces=[];
+    for(const a of PETS.add){
+      const ti=(a.tmplIdx!=null)?a.tmplIdx:0;
+      const t=pl.recs[ti];
+      if(!t) throw new Error('待添加的模板宠物不存在');
+      maxNum++;
+      const nn=String(maxNum), old=t.num;
+      if(nn.length!==old.length)
+        throw new Error('宠物编号会从 '+old+' 变成 '+nn+'（位数变了），暂不支持，请先少加几只');
+      const tid=a.targetId||t.id;
+      pieces.push(tid===t.id ? copyPetUnit(check,t,nn) : makePetUnit(check,t,tid,nn));
+    }
+    const total=pieces.reduce((s,x)=>s+x.length,0);
+    const nb=new Uint8Array(check.length+total);
+    nb.set(check.subarray(0,end),0);
+    let op=end;
+    for(const pc of pieces){ nb.set(pc,op); op+=pc.length; }
+    nb.set(check.subarray(end),op);
+    putI32(nb,pl.countOff,pl.count+PETS.add.length);
+    const pl2=findPetList(nb);
+    if(!pl2||pl2.recs.length!==PETS.recs.length+PETS.add.length)
+      throw new Error('宠物添加后回读不一致，已中止（文件不会导出）');
+    ch.push('宠物：添加 '+PETS.add.length+' 只（'+
+      PETS.add.map(a=>{ const inf=(window.PET_CAT||{})[a.targetId];
+        return inf?inf[0]:((PETS.recs[a.tmplIdx||0]||{}).name||a.targetId); }).join('、')+
+      '）；'+pl.recs.length+' → '+pl2.recs.length+' 只，文件 +'+total+' 字节');
+    finalOut=nb;
+  }
+  return {out:finalOut, changes:ch, n:S.heroes.length-(pendingDel?1:0)};
+}
+function dl(blob,name){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=name;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);
+}
+/* 顶部标签 + 内嵌添加列表最后初始化：必须在所有 let 声明执行之后（否则会踩到 TDZ） */
+try{ initTabs(); }catch(e){ console.warn('initTabs', e); }
+try{ addInit(); }catch(e){ console.warn('addInit', e); }
+</script>
+</body>
+</html>

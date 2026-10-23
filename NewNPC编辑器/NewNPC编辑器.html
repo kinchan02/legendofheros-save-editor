@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>英雄立志传·三国志 —— 自建武将（NewNPC）编辑器</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --line:#e4e7ec; --tx:#1f2430; --tx2:#5d6675;
+    --accent:#2f6fed; --accent2:#eaf1ff; --ok:#1c8f5a; --okbg:#e8f7ef;
+    --warn:#a8620a; --warnbg:#fdf3e3; --err:#c0392b; --errbg:#fdecea;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--tx);
+    font:14px/1.6 "Microsoft YaHei","PingFang SC",system-ui,sans-serif;}
+  .wrap{max-width:1180px;margin:0 auto;padding:22px 18px 60px}
+  h1{font-size:20px;margin:0 0 4px}
+  .sub{color:var(--tx2);font-size:13px;margin-bottom:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:16px 18px;margin-bottom:14px}
+  .card h2{font-size:15px;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+  .card h2 .tag{font-size:11px;font-weight:400;padding:2px 7px;border-radius:20px;
+    background:var(--accent2);color:var(--accent);border:1px solid #cfe0ff}
+  .card h2 .tag.warn{background:var(--warnbg);color:var(--warn);border-color:#f0dcbb}
+  .card h2 .tag.ok{background:var(--okbg);color:var(--ok);border-color:#c5ebd8}
+  #drop{border:2px dashed #c6cdd8;border-radius:10px;padding:26px;text-align:center;
+    color:var(--tx2);cursor:pointer;transition:.15s;background:#fbfcfd}
+  #drop:hover,#drop.over{border-color:var(--accent);background:var(--accent2);color:var(--accent)}
+  .row{display:flex;flex-wrap:wrap;gap:14px}
+  .col{flex:1 1 300px;min-width:260px}
+  .kv{display:grid;grid-template-columns:132px 1fr;gap:6px 10px;align-items:center}
+  .kv label{color:var(--tx2);font-size:13px}
+  input[type=text],input[type=number]{width:100%;padding:6px 9px;border:1px solid var(--line);
+    border-radius:6px;font:inherit;background:#fff;color:var(--tx)}
+  input:focus{outline:2px solid var(--accent2);border-color:var(--accent)}
+  button{padding:7px 14px;border:1px solid var(--line);background:#fff;border-radius:7px;
+    font:inherit;cursor:pointer;color:var(--tx)}
+  button:hover{border-color:var(--accent);color:var(--accent)}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  button.primary:hover{background:#2459c4;color:#fff}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  .tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .npcbtns{display:flex;gap:8px;flex-wrap:wrap}
+  .npcbtns button.on{background:var(--accent2);border-color:var(--accent);color:var(--accent);font-weight:600}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left}
+  th{color:var(--tx2);font-weight:500;background:#fafbfc;position:sticky;top:0;z-index:1}
+  .scroll{max-height:430px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+  td.num{font-family:Consolas,monospace}
+  .msg{padding:9px 12px;border-radius:8px;margin:8px 0;font-size:13px;white-space:pre-wrap}
+  .msg.ok{background:var(--okbg);color:var(--ok);border:1px solid #c5ebd8}
+  .msg.warn{background:var(--warnbg);color:var(--warn);border:1px solid #f0dcbb}
+  .msg.err{background:var(--errbg);color:var(--err);border:1px solid #f3c9c4}
+  .hint{color:var(--tx2);font-size:12.5px;line-height:1.7}
+  code{background:#eef1f5;padding:1px 5px;border-radius:4px;font-family:Consolas,monospace;font-size:12.5px}
+  .mono{font-family:Consolas,monospace}
+  .flexline{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+  .badge{font-size:11.5px;color:var(--tx2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>自建武将（NewNPC）编辑器</h1>
+  <div class="sub">《英雄立志传·三国志》 · 纯本地运行，不联网 · 改动前请务必先备份 NewNPC 文件</div>
+
+  <div class="card">
+    <h2>① 载入存档 <span class="tag" id="verTag">等待文件</span></h2>
+    <div id="drop">把 <b>NewNPC</b> 文件拖到这里，或点击选择文件<br>
+      <span class="hint">路径：<code>%USERPROFILE%\AppData\LocalLow\FreeWing\ThreeKingdom\SaveData\NewNPC</code></span>
+    </div>
+    <input type="file" id="f" style="display:none">
+    <div id="fileMsg"></div>
+    <div class="flexline" style="margin-top:10px">
+      <button id="btnBackup" disabled>下载原始备份（NewNPC.bak）</button>
+      <span class="badge">建议先点这个存一份留底</span>
+    </div>
+  </div>
+
+  <div class="card" id="mainCard" style="display:none">
+    <h2>② 选择要修改的自建武将</h2>
+    <div class="npcbtns" id="npcBtns"></div>
+  </div>
+
+  <div class="card" id="editCard" style="display:none">
+    <h2>③ 修改内容</h2>
+    <div class="tabs">
+      <button data-tab="base" class="on">基本信息</button>
+      <button data-tab="six">六维 / 数值字段</button>
+      <button data-tab="face">捏人数据</button>
+      <button data-tab="raw">字段浏览器</button>
+    </div>
+
+    <div id="tab-base">
+      <div class="row">
+        <div class="col">
+          <div class="kv">
+            <label>姓</label><input type="text" id="s0">
+            <label>名</label><input type="text" id="s1">
+            <label>字</label><input type="text" id="s2">
+            <label>别名（可空）</label><input type="text" id="s3">
+            <label>编号</label><input type="text" id="s4">
+            <label>模型预设</label><input type="text" id="s5">
+          </div>
+          <div class="msg warn" style="margin-top:12px">
+「编号 / 模型预设」这两个字段直接改可能引发进游戏后读取异常，除非你很确定，否则<b>建议只改姓、名、字、别名</b>。
+          </div>
+        </div>
+        <div class="col">
+          <table>
+            <tr><th>字段</th><th>文件内偏移</th><th>当前值</th></tr>
+            <tr><td>姓</td><td class="mono" id="of0"></td><td class="mono" id="ov0"></td></tr>
+            <tr><td>名</td><td class="mono" id="of1"></td><td class="mono" id="ov1"></td></tr>
+            <tr><td>字</td><td class="mono" id="of2"></td><td class="mono" id="ov2"></td></tr>
+            <tr><td>别名</td><td class="mono" id="of3"></td><td class="mono" id="ov3"></td></tr>
+          </table>
+          <div class="hint" style="margin-top:10px">
+            汉字按 UTF-8 计算，一个汉字 3 字节，单字段上限 60 字节。<br>
+            姓名长度变化会自动重建记录头，其余字节原样保留。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-six" style="display:none">
+      <div class="msg warn">
+这里是<b>待标定</b>的数值字段。已确证：记录中「7 字节 → 6 个 int32 → 44 字节（11 个 float）」这一段的<b>位置是可靠的</b>
+（跟着姓名字段走，不会因版本漂移）。<br>
+本机数据里这 6 个 int32 全是 <b>18</b>，很可能是六维（统率/武力/智略/政略/魅力/意志），但<b>顺序尚未验证</b>。
+先看「字段浏览器」核对，或按说明做一次两分钟标定，我再把名字坐实。
+      </div>
+      <div class="row" id="sixBox"></div>
+      <div style="margin-top:14px">
+        <div class="hint" id="sixHint"></div>
+      </div>
+    </div>
+
+    <div id="tab-face" style="display:none">
+      <div class="flexline">
+        <input type="text" id="faceFilter" placeholder="筛选：眉毛 / Nose / Jaw ..." style="max-width:260px">
+        <button id="btnFaceExport">导出捏人数据 .json</button>
+        <input type="file" id="faceImport" style="display:none">
+        <button id="btnFaceImport">导入捏人数据 .json</button>
+        <button id="btnFaceReset">还原本记录原值</button>
+      </div>
+      <div id="faceMsg"></div>
+      <div class="scroll"><table id="faceTable"><thead><tr>
+        <th style="width:44%">参数名</th><th style="width:110px">值</th>
+        <th style="width:120px">偏移</th><th>滑杆</th>
+      </tr></thead><tbody></tbody></table></div>
+      <div class="hint" style="margin-top:10px">
+        捏人数据只包含脸部/身体的变形参数，不含六维与技能。共 <b id="faceCount">0</b> 个参数。
+      </div>
+    </div>
+
+    <div id="tab-raw" style="display:none">
+      <div class="flexline">
+        <input type="text" id="rawFilter" placeholder="按偏移 / 数值搜索，例如 18" style="max-width:280px">
+        <span class="badge">记录头区域（姓名字段之后到捏人数据之前）按 4 字节对齐列出</span>
+      </div>
+      <div class="scroll"><table id="rawTable"><thead><tr>
+        <th style="width:100px">偏移</th><th style="width:150px">int32</th>
+        <th style="width:170px">float</th><th>原始字节</th>
+      </tr></thead><tbody></tbody></table></div>
+    </div>
+  </div>
+
+  <div class="card" id="outCard" style="display:none">
+    <h2>④ 校验并导出</h2>
+    <div class="flexline">
+      <button class="primary" id="btnBuild">生成并校验新文件</button>
+      <button id="btnResetAll">撤销全部修改</button>
+    </div>
+    <div id="outMsg"></div>
+    <div class="flexline" id="dlBox" style="display:none">
+      <button class="primary" id="btnDownload">下载新的 NewNPC</button>
+      <span class="badge" id="dlHint"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>使用步骤 / 安全须知</h2>
+    <div class="hint">
+      1. <b>完全退出游戏</b>（新武将数据在游戏启动时就载入内存，开着游戏改不生效）。<br>
+      2. 先点上面的「下载原始备份」，或手工把 <code>SaveData\NewNPC</code> 复制一份改名 <code>NewNPC.bak</code>。<br>
+      3. 载入 NewNPC → 改内容 → 点「生成并校验新文件」→ 下载。<br>
+      4. 把下载到的 <code>NewNPC</code> 覆盖回 <code>SaveData</code> 目录。<br>
+      5. 进游戏，到「自建武将」里查看效果。出问题就用备份覆盖回去。<br>
+      <br>
+      本工具只改动你明确修改的那几个字节，其余部分按原字节复制，导出前会做一次结构自检；校验不通过不会给下载按钮。
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ============================ 基础工具 ============================ */
+const TD = new TextDecoder('utf-8');
+const TE = new TextEncoder();
+const u32 = (b,o)=> (b[o] | b[o+1]<<8 | b[o+2]<<16 | b[o+3]<<24) >>> 0;
+const i32 = (b,o)=> (b[o] | b[o+1]<<8 | b[o+2]<<16 | b[o+3]<<24);
+const f32 = (b,o)=> new DataView(b.buffer, b.byteOffset, b.byteLength).getFloat32(o, true);
+const putI32 = (b,o,v)=>{ b[o]=v&255; b[o+1]=(v>>8)&255; b[o+2]=(v>>16)&255; b[o+3]=(v>>24)&255; };
+const putF32 = (b,o,v)=>{ new DataView(b.buffer, b.byteOffset, b.byteLength).setFloat32(o, v, true); };
+const hex = (b,o,n)=>{ let s=[]; for(let i=0;i<n;i++) s.push(b[o+i].toString(16).padStart(2,'0')); return s.join(' '); };
+const esc = s=> String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ============================ 解析器 ============================ */
+function readHead(b, p){
+  // 3 × 1字节长度字符串
+  const fs = [];
+  for (let i=0;i<3;i++){
+    if (p >= b.length) throw new Error('超出文件末尾(读姓名字段)');
+    const n = b[p];
+    if (p+1+n > b.length) throw new Error('超出文件末尾(读姓名字段)');
+    fs.push({ off:p, lenBytes:1, bytes:1+n, val: TD.decode(b.subarray(p+1,p+1+n)) });
+    p += 1+n;
+  }
+  // 1 × varint 长度字符串（别名）
+  const vs = p; let v=0, sh=0, guard=0;
+  while (true){
+    if (p >= b.length || ++guard > 5) throw new Error('超出文件末尾(读别名)');
+    const x = b[p++]; v |= (x & 0x7f) << sh;
+    if (!(x & 0x80)) break; sh += 7;
+  }
+  if (p+v > b.length) throw new Error('超出文件末尾(读别名)');
+  fs.push({ off:vs, lenBytes:p-vs, bytes:(p-vs)+v, val: TD.decode(b.subarray(p,p+v)), varint:true });
+  p += v;
+  // 2 × 1字节长度字符串
+  for (let i=0;i<2;i++){
+    if (p >= b.length) throw new Error('超出文件末尾(读编号字段)');
+    const n = b[p];
+    if (p+1+n > b.length) throw new Error('超出文件末尾(读编号字段)');
+    fs.push({ off:p, lenBytes:1, bytes:1+n, val: TD.decode(b.subarray(p+1,p+1+n)) });
+    p += 1+n;
+  }
+  return { fields: fs, headEnd: p };
+}
+
+// 在 [from,to) 里找捏人数据块：4字节个数 N + N×(1字节长度 + 名称 + float)
+function findMorph(b, from, to){
+  const lim = Math.min(to, b.length);
+  for (let o=from; o<lim-4; o++){
+    const n = i32(b,o);
+    if (n < 30 || n > 400) continue;
+    let p = o+4, ok = true, names = [];
+    for (let i=0;i<n;i++){
+      if (p+1 > lim) { ok=false; break; }
+      const L = b[p];
+      if (L < 4 || L > 90) { ok=false; break; }
+      if (p+1+L+4 > lim) { ok=false; break; }
+      const nm = TD.decode(b.subarray(p+1,p+1+L));
+      if (/[\u0000-\u001F]/.test(nm)) { ok=false; break; }
+      if (TE.encode(nm).length !== L) { ok=false; break; }
+      names.push({ off:p, len:L, name:nm, valOff:p+1+L });
+      p += 1+L+4;
+    }
+    if (ok && names.length===n && /Genesis8/.test(names[0].name)) {
+      return { start:o, end:p, count:n, items:names };
+    }
+  }
+  return null;
+}
+
+function looksLikeRecordStart(b, q){
+  if (q+40 > b.length) return false;
+  let h;
+  try { h = readHead(b, q); } catch(e){ return false; }
+  const v = h.fields.map(f=>f.val);
+  if (!/^[\u4e00-\u9fa5]{1,3}$/.test(v[0])) return false;      // 姓
+  if (!/^[\u4e00-\u9fa5]{1,3}$/.test(v[1])) return false;      // 名
+  if (v[2] && !/^[\u4e00-\u9fa5]{1,3}$/.test(v[2])) return false; // 字
+  if (v[3].length > 12) return false;
+  if (v[4].length > 16 || /[\u4e00-\u9fa5]/.test(v[4])) return false; // 编号：ASCII
+  if (v[5].length > 32) return false;
+  // 紧跟着 7 字节 + 6 个 int32，值落在合理范围
+  let p = h.headEnd + 7;
+  if (p+24 > b.length) return false;
+  for (let i=0;i<6;i++){ const x = i32(b,p+i*4); if (x < 0 || x > 1000) return false; }
+  // 后面 8000 字节内应能找到捏人数据块
+  return !!findMorph(b, h.headEnd, Math.min(b.length, q+9000));
+}
+
+function parseFile(buf){
+  const b = new Uint8Array(buf);
+  if (b.length < 16) throw new Error('文件太小，不是 NewNPC');
+  const ver = u32(b,0), cnt = u32(b,4);
+
+  const candidates = [];
+  for (let q=8; q < b.length-40; q++){
+    if (looksLikeRecordStart(b,q)) candidates.push(q);
+  }
+  let starts;
+  if (cnt === 1) starts = [8];
+  else if (candidates.length === cnt && candidates[0] === 8) starts = candidates;
+  else if (candidates.length >= cnt && candidates[0] === 8) starts = candidates.slice(0,cnt);
+  else starts = null;
+
+  if (!starts) throw new Error('记录数=' + cnt + '，但只扫描到 ' + candidates.length +
+      ' 个候选记录起点，结构无法安全拆分。请把文件发我，我来适配。');
+
+  const recs = [];
+  for (let i=0;i<starts.length;i++){
+    const s = starts[i];
+    const e = (i+1 < starts.length) ? starts[i+1] : b.length;
+    const h = readHead(b, s);
+    const m = findMorph(b, h.headEnd, e);
+    if (!m) throw new Error('第 ' + (i+1) + ' 条记录没找到捏人数据块，解析中止。');
+    recs.push({ start:s, end:e, head:h, morph:m,
+                // 六维候选：记录头之后 7 字节处开始的 6 个 int32
+                sixOff: h.headEnd + 7 });
+  }
+  return { buf:b, ver, cnt, recs };
+}
+
+/* ============================ 状态 ============================ */
+let P = null;                 // parse 结果
+let cur = 0;                  // 当前记录索引
+let curTab = 'base';
+let edits = [];               // edits[i] = {s:[..6 strings..], six:{idx:val}, face:{idx:val}}
+function blankEdit(){ return { s:null, six:{}, face:{} }; }
+function E(i){
+  while (edits.length <= i) edits.push(null);
+  if (!edits[i]) edits[i] = blankEdit();
+  return edits[i];
+}
+function hasEdits(i){
+  const e = edits[i]; if (!e) return false;
+  return !!e.s || Object.keys(e.six).length || Object.keys(e.face).length;
+}
+function anyEdits(){ return edits.some((e,i)=>e && hasEdits(i)); }
+
+const $ = id => document.getElementById(id);
+const VER_TXT = v => v;   // 版本号原样显示
+
+/* ============================ 载入 ============================ */
+$('drop').onclick = ()=> $('f').click();
+$('f').onchange = e => { if (e.target.files[0]) load(e.target.files[0]); };
+['dragenter','dragover'].forEach(ev=>{
+  const d=$('drop');
+  d.addEventListener(ev, e=>{ e.preventDefault(); d.classList.add('over'); });
+});
+['dragleave','drop'].forEach(ev=>{
+  const d=$('drop');
+  d.addEventListener(ev, e=>{ e.preventDefault(); d.classList.remove('over'); });
+});
+$('drop').addEventListener('drop', e=>{
+  const f = e.dataTransfer.files[0]; if (f) load(f);
+});
+
+function load(file){
+  const fr = new FileReader();
+  fr.onload = ()=>{
+    try{
+      P = parseFile(fr.result);
+      edits = [];
+      cur = 0;
+      $('verTag').textContent = '版本号 ' + P.ver + ' · 记录数 ' + P.cnt;
+      $('verTag').className = 'tag ok';
+      $('fileMsg').innerHTML = ok(
+        '载入成功：' + file.name + '（' + P.buf.length.toLocaleString() + ' 字节）\n' +
+        '版本戳 = ' + P.ver + '，共解析出 ' + P.recs.length + ' 条自建武将记录。') +
+        (P.ver === 202610020 ? '' :
+         warn('注意：本工具的结构规则是基于「版本戳 202610020」验证的，你这份是 ' + P.ver +
+              '。如果解析结果看起来正常（姓名、捏人参数条数都对），一般可以放心用；' +
+              '如果导出后进游戏异常，用备份覆盖回去即可。'));
+      renderNpcBtns();
+      $('mainCard').style.display = '';
+      $('editCard').style.display = '';
+      $('outCard').style.display = '';
+      $('btnBackup').disabled = false;
+      selectNpc(0);
+    }catch(err){
+      P = null;
+      $('verTag').textContent = '载入失败';
+      $('verTag').className = 'tag warn';
+      $('fileMsg').innerHTML = err_('载入失败：' + err.message);
+      $('mainCard').style.display='none'; $('editCard').style.display='none'; $('outCard').style.display='none';
+    }
+  };
+  fr.readAsArrayBuffer(file);
+}
+const ok   = t => '<div class="msg ok">'   + esc(t) + '</div>';
+const warn = t => '<div class="msg warn">' + esc(t) + '</div>';
+const err_ = t => '<div class="msg err">'  + esc(t) + '</div>';
+
+$('btnBackup').onclick = ()=>{
+  if (!P) return;
+  downloadBlob(new Blob([P.buf], {type:'application/octet-stream'}), 'NewNPC.bak');
+};
+
+/* ============================ 武将列表 ============================ */
+function fullName(r){
+  const v = r.head.fields.map(f=>f.val);
+  return (v[0]||'') + (v[1]||'') + (v[2] ? '（字 ' + v[2] + '）' : '');
+}
+function renderNpcBtns(){
+  const box = $('npcBtns'); box.innerHTML = '';
+  P.recs.forEach((r,i)=>{
+    const b = document.createElement('button');
+    b.textContent = (i+1) + '. ' + fullName(r) + (hasEdits(i) ? ' *' : '');
+    if (i===cur) b.className = 'on';
+    b.onclick = ()=> selectNpc(i);
+    box.appendChild(b);
+  });
+}
+function selectNpc(i){
+  cur = i;
+  renderNpcBtns();
+  renderBase(); renderSix(); renderFace(); renderRaw();
+  $('outMsg').innerHTML = ''; $('dlBox').style.display='none';
+  switchTab(curTab);
+}
+
+/* ============================ Tab 切换 ============================ */
+document.querySelectorAll('.tabs button').forEach(b=>{
+  b.onclick = ()=> switchTab(b.dataset.tab);
+});
+function switchTab(t){
+  curTab = t;
+  document.querySelectorAll('.tabs button').forEach(b=> b.classList.toggle('on', b.dataset.tab===t));
+  ['base','six','face','raw'].forEach(x=> $('tab-'+x).style.display = (x===t ? '' : 'none'));
+}
+
+/* ============================ 基本信息 ============================ */
+function curStrings(i){
+  const e = edits[i];
+  if (e && e.s) return e.s.slice();
+  return P.recs[i].head.fields.map(f=>f.val);
+}
+function renderBase(){
+  const r = P.recs[cur];
+  const v = curStrings(cur);
+  for (let k=0;k<6;k++) $('s'+k).value = v[k] || '';
+  const keys = ['of','ov'];
+  for (let k=0;k<4;k++){
+    $('of'+k).textContent = '0x' + r.head.fields[k].off.toString(16).toUpperCase() +
+        '（' + r.head.fields[k].bytes + 'B）';
+    $('ov'+k).textContent = JSON.stringify(r.head.fields[k].val);
+  }
+}
+for (let k=0;k<6;k++){
+  $('s'+k).addEventListener('input', ()=>{
+    const v = [];
+    for (let j=0;j<6;j++) v.push($('s'+j).value);
+    E(cur).s = v;
+    renderNpcBtns();
+  });
+}
+
+/* ============================ 六维候选 ============================ */
+const SIX_LABEL = ['① 统率?','② 武力?','③ 智略?','④ 政略?','⑤ 魅力?','⑥ 意志?'];
+function sixVals(i){
+  const r = P.recs[i], e = edits[i], out = [];
+  for (let k=0;k<6;k++){
+    const o = r.sixOff + k*4;
+    out.push((e && (k in e.six)) ? e.six[k] : i32(P.buf, o));
+  }
+  return out;
+}
+function renderSix(){
+  const r = P.recs[cur];
+  const box = $('sixBox');
+  box.innerHTML = '';
+  const vals = sixVals(cur);
+  for (let k=0;k<6;k++){
+    const o = r.sixOff + k*4;
+    const d = document.createElement('div');
+    d.className = 'col';
+    d.innerHTML =
+      '<div class="kv" style="grid-template-columns:96px 1fr">' +
+      '<label>' + SIX_LABEL[k] + '</label>' +
+      '<input type="number" id="six'+k+'" value="' + vals[k] + '" min="0" max="999">' +
+      '</div>' +
+      '<div class="badge mono">偏移 0x' + o.toString(16).toUpperCase() + '</div>';
+    box.appendChild(d);
+  }
+  for (let k=0;k<6;k++){
+    $('six'+k).addEventListener('input', ()=>{
+      const x = parseInt($('six'+k).value, 10);
+      if (!isFinite(x)) return;
+      // 值与原值相同就取消改动
+      if (x === i32(P.buf, r.sixOff + k*4)) delete E(cur).six[k];
+      else E(cur).six[k] = x;
+      renderNpcBtns();
+    });
+  }
+  const raw = [];
+  for (let k=0;k<6;k++) raw.push(i32(P.buf, r.sixOff + k*4));
+  $('sixHint').innerHTML =
+    '文件里的原始值：<span class="mono">[' + raw.join(', ') + ']</span><br>' +
+    '对应偏移：<span class="mono">0x' + r.sixOff.toString(16).toUpperCase() + ' ~ 0x' +
+    (r.sixOff + 23).toString(16).toUpperCase() + '</span>';
+}
+
+/* ============================ 捏人数据 ============================ */
+function faceVals(i){
+  const r = P.recs[i], e = edits[i], out = [];
+  r.morph.items.forEach((it,k)=>{
+    out.push((e && (k in e.face)) ? e.face[k] : f32(P.buf, it.valOff));
+  });
+  return out;
+}
+function renderFace(){
+  const r = P.recs[cur];
+  const tb = $('faceTable').querySelector('tbody');
+  tb.innerHTML = '';
+  const filt = ($('faceFilter').value || '').toLowerCase();
+  const vals = faceVals(cur);
+  let shown = 0;
+  r.morph.items.forEach((it,k)=>{
+    if (filt && it.name.toLowerCase().indexOf(filt) < 0) return;
+    shown++;
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td class="mono" title="' + esc(it.name) + '">' + esc(it.name) + '</td>' +
+      '<td><input type="number" step="0.5" id="fc' + k + '" value="' + (+vals[k].toFixed(4)) + '"></td>' +
+      '<td class="mono badge">0x' + it.valOff.toString(16).toUpperCase() + '</td>' +
+      '<td><input type="range" min="-100" max="100" step="1" id="fr' + k + '" value="' +
+        Math.max(-100, Math.min(100, Math.round(vals[k]))) + '"></td>';
+    tb.appendChild(tr);
+  });
+  $('faceCount').textContent = r.morph.count + (filt ? '（筛出 ' + shown + '）' : '');
+  r.morph.items.forEach((it,k)=>{
+    const num = $('fc'+k), rng = $('fr'+k);
+    if (!num || !rng) return;
+    const set = v => { if (v === f32(P.buf, it.valOff)) delete E(cur).face[k]; else E(cur).face[k] = v; renderNpcBtns(); };
+    num.addEventListener('input', ()=>{ const v=parseFloat(num.value); if (isFinite(v)){ rng.value = Math.max(-100,Math.min(100,Math.round(v))); set(v); } });
+    rng.addEventListener('input', ()=>{ const v=parseFloat(rng.value); num.value = v; set(v); });
+  });
+}
+$('faceFilter').addEventListener('input', renderFace);
+
+$('btnFaceExport').onclick = ()=>{
+  const r = P.recs[cur], vals = faceVals(cur);
+  const data = { tool:'NewNPC编辑器', version:P.ver, hero: fullName(r),
+                 values: {} };
+  r.morph.items.forEach((it,k)=> data.values[it.name] = +vals[k].toFixed(5));
+  downloadBlob(new Blob([JSON.stringify(data,null,1)], {type:'application/json'}),
+               '捏人-' + fullName(r).replace(/[（(].*?[）)]/g,'') + '.json');
+};
+$('btnFaceImport').onclick = ()=> $('faceImport').click();
+$('faceImport').onchange = e=>{
+  const f = e.target.files[0]; if (!f) return;
+  const fr = new FileReader();
+  fr.onload = ()=>{
+    try{
+      const j = JSON.parse(fr.result);
+      const vals = j.values || j;
+      const r = P.recs[cur];
+      let hit = 0;
+      r.morph.items.forEach((it,k)=>{
+        if (typeof vals[it.name] === 'number'){ E(cur).face[k] = vals[it.name]; hit++; }
+      });
+      $('faceMsg').innerHTML = hit ? ok('已导入 ' + hit + ' 个参数。') 
+        : err_('这个 json 里的参数名和当前武将对不上，没有应用任何改动。');
+      renderFace(); renderNpcBtns();
+    }catch(err){ $('faceMsg').innerHTML = err_('json 解析失败：' + err.message); }
+    e.target.value = '';
+  };
+  fr.readAsText(f,'utf-8');
+};
+$('btnFaceReset').onclick = ()=>{
+  if (edits[cur]) edits[cur].face = {};
+  $('faceMsg').innerHTML = ok('已还原为文件里的原值。');
+  renderFace(); renderNpcBtns();
+};
+
+/* ============================ 字段浏览器 ============================ */
+function renderRaw(){
+  const r = P.recs[cur];
+  const tb = $('rawTable').querySelector('tbody');
+  tb.innerHTML = '';
+  const q = ($('rawFilter').value || '').trim().toLowerCase();
+  const from = r.head.headEnd, to = r.morph.start;
+  for (let o=from; o+4<=to; o+=4){
+    const iv = i32(P.buf,o), fv = f32(P.buf,o);
+    const offs = '0x' + o.toString(16).toUpperCase();
+    if (q && !(offs.toLowerCase().includes(q) || String(iv).includes(q) ||
+               String(+fv.toFixed(3)).includes(q))) continue;
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td class="mono">' + offs + '</td>' +
+      '<td><input type="number" id="rw' + o + '" value="' + iv + '" style="width:120px"></td>' +
+      '<td class="mono">' + (+fv.toFixed(4)) + '</td>' +
+      '<td class="mono badge">' + hex(P.buf,o,4) + '</td>';
+    tb.appendChild(tr);
+    const inp = tr.querySelector('input');
+    inp.addEventListener('input', ()=>{
+      const x = parseInt(inp.value,10);
+      if (!isFinite(x)) return;
+      if (x === i32(P.buf,o)) delete E(cur).six['#raw'+o];
+      else E(cur).six['#raw'+o] = { off:o, val:x };
+      renderNpcBtns();
+    });
+  }
+}
+$('rawFilter').addEventListener('input', renderRaw);
+
+/* ============================ 生成 + 校验 ============================ */
+function build(){
+  // 1) 复制原文件
+  const work = new Uint8Array(P.buf);
+  const changes = [];
+  // 2) 应用的定宽改动（int32 / float32）
+  P.recs.forEach((r,i)=>{
+    const e = edits[i]; if (!e) return;
+    const rawOffs = new Set();
+    for (const k in e.six){ const it = e.six[k]; if (it && typeof it === 'object') rawOffs.add(it.off); }
+    for (const k in e.six){
+      const item = e.six[k];
+      const isRaw = item && typeof item === 'object';
+      const off = isRaw ? item.off : (r.sixOff + (+k)*4);
+      const val = isRaw ? item.val : item;
+      if (off + 4 > work.length) continue;
+      if (!isRaw && rawOffs.has(off)) continue;   // 字段浏览器已手改同一位置，以它为准
+      changes.push({ off,
+        desc: 'int32 @0x' + off.toString(16).toUpperCase() + ' : ' + i32(P.buf,off) + ' → ' + val });
+      putI32(work, off, val);
+    }
+    for (const k in e.face){
+      const it = r.morph.items[k]; if (!it) continue;
+      const val = e.face[k];
+      changes.push({ off: it.valOff, desc: '捏人 ' + it.name + ' : ' + f32(P.buf,it.valOff) + ' → ' + val });
+      putF32(work, it.valOff, val);
+    }
+  });
+  // 3) 重建字符串块（记录头），其余字节原样
+  const parts = [ P.buf.subarray(0,8) ];
+  const encs = [];
+  P.recs.forEach((r,i)=>{
+    const strs = curStrings(i);
+    const chunks = [];
+    for (let k=0;k<3;k++) chunks.push(encStr(strs[k]||'', false));
+    chunks.push(encStr(strs[3]||'', true));
+    for (let k=4;k<6;k++) chunks.push(encStr(strs[k]||'', false));
+    const head = concat(chunks);
+    encs.push(head);
+    if (head.length !== (r.head.headEnd - r.start)){
+      changes.push({ off: r.start, desc: '记录 ' + (i+1) + ' 头部长度 ' + (r.head.headEnd - r.start) +
+                    ' → ' + head.length + ' 字节（姓名长度变化）' });
+    }
+    parts.push(head);
+    parts.push(work.subarray(r.head.headEnd, r.end));
+  });
+  const out = concat(parts);
+
+  // 4) 自检：重新解析
+  const chk = parseFile(out.buffer.slice(out.byteOffset, out.byteOffset + out.byteLength));
+  if (chk.ver !== P.ver) throw new Error('自检失败：版本戳变了');
+  if (chk.recs.length !== P.recs.length) throw new Error('自检失败：记录数变了');
+  for (let i=0;i<chk.recs.length;i++){
+    if (chk.recs[i].morph.count !== P.recs[i].morph.count)
+      throw new Error('自检失败：第 '+(i+1)+' 条记录的捏人参数个数变了');
+    const a = curStrings(i);
+    const bb = chk.recs[i].head.fields.map(f=>f.val);
+    for (let k=0;k<6;k++){
+      if ((a[k]||'') !== (bb[k]||''))
+        throw new Error('自检失败：第 '+(i+1)+' 条的字段「'+k+'」写回后不一致');
+    }
+  }
+  return { out, changes, chk };
+}
+function encStr(s, varint){
+  const body = TE.encode(s);
+  if (body.length > 60) throw new Error('字符串过长（上限 60 字节）：' + s);
+  let head;
+  if (varint){
+    const tmp = []; let v = body.length;
+    do { let b = v & 0x7f; v >>>= 7; if (v) b |= 0x80; tmp.push(b); } while (v);
+    head = Uint8Array.from(tmp);
+  } else {
+    head = Uint8Array.from([body.length]);
+  }
+  const r = new Uint8Array(head.length + body.length);
+  r.set(head,0); r.set(body, head.length);
+  return r;
+}
+function concat(arrs){
+  let n = 0; arrs.forEach(a=> n += a.length);
+  const r = new Uint8Array(n); let p = 0;
+  arrs.forEach(a=>{ r.set(a,p); p += a.length; });
+  return r;
+}
+
+let built = null;
+$('btnBuild').onclick = ()=>{
+  if (!P) return;
+  try{
+    built = build();
+  }catch(err){
+    built = null;
+    $('dlBox').style.display = 'none';
+    $('outMsg').innerHTML = err_('校验未通过，已阻止生成：\n' + err.message + '\n\n（不会输出任何文件，你的原文件也不受影响）');
+    return;
+  }
+  const cs = built.changes;
+  let html = ok('校验通过：新文件 ' + built.out.length.toLocaleString() + ' 字节（原 ' +
+      P.buf.length.toLocaleString() + ' 字节）。\n记录数 ' + built.chk.recs.length +
+      ' 条，每条记录的姓名字段与捏人参数个数都已复核一致。');
+  if (!cs.length){
+    html += warn('你还没有做任何修改，现在导出的文件与原件内容完全相同。');
+  } else {
+    html += '<div class="msg ok"><b>改动清单（' + cs.length + ' 项）</b>\n' +
+      cs.map((c,i)=> (i+1) + '. ' + c.desc).join('\n') + '</div>';
+  }
+  $('outMsg').innerHTML = html;
+  $('dlBox').style.display = '';
+  $('dlHint').textContent = '下载后覆盖到 SaveData 目录，文件名保持 NewNPC';
+};
+$('btnDownload').onclick = ()=>{
+  if (!built) return;
+  downloadBlob(new Blob([built.out], {type:'application/octet-stream'}), 'NewNPC');
+};
+$('btnResetAll').onclick = ()=>{
+  edits = [];
+  built = null;
+  $('outMsg').innerHTML = ok('已撤销全部修改。');
+  $('dlBox').style.display='none';
+  selectNpc(cur);
+};
+
+function downloadBlob(blob, name){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+</script>
+</body>
+</html>
